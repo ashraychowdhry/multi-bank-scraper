@@ -1,17 +1,18 @@
 import { useState, useMemo } from "react";
-import type { ChaseTransaction } from "../types";
+import type { Transaction } from "@shared/types";
 import { formatCurrency, formatDate, formatMonthLabel } from "../utils/format";
 import { Filters } from "./Filters";
 
 type SortKey = "date" | "description" | "amount";
 type SortDir = "asc" | "desc";
 
-export function TransactionTable({ transactions }: { transactions: ChaseTransaction[] }) {
+export function TransactionTable({ transactions }: { transactions: Transaction[] }) {
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [search, setSearch] = useState("");
   const [accountFilter, setAccountFilter] = useState("all");
   const [monthFilter, setMonthFilter] = useState("all");
+  const [institutionFilter, setInstitutionFilter] = useState("all");
   const [showCount, setShowCount] = useState(50);
 
   const accountOptions = useMemo(
@@ -20,9 +21,13 @@ export function TransactionTable({ transactions }: { transactions: ChaseTransact
   );
 
   const monthOptions = useMemo(() => {
-    const months = [...new Set(transactions.map((t) => t.date.slice(0, 7)))].sort().reverse();
-    return months.map((m) => ({ value: m, label: formatMonthLabel(m) }));
+    return [...new Set(transactions.map((t) => t.date.slice(0, 7)))].sort().reverse();
   }, [transactions]);
+
+  const institutionOptions = useMemo(
+    () => [...new Set(transactions.map((t) => t.institution))].sort(),
+    [transactions]
+  );
 
   const filtered = useMemo(() => {
     let txns = [...transactions];
@@ -37,6 +42,9 @@ export function TransactionTable({ transactions }: { transactions: ChaseTransact
     if (monthFilter !== "all") {
       txns = txns.filter((t) => t.date.startsWith(monthFilter));
     }
+    if (institutionFilter !== "all") {
+      txns = txns.filter((t) => t.institution === institutionFilter);
+    }
 
     txns.sort((a, b) => {
       let cmp = 0;
@@ -47,7 +55,7 @@ export function TransactionTable({ transactions }: { transactions: ChaseTransact
     });
 
     return txns;
-  }, [transactions, search, accountFilter, monthFilter, sortKey, sortDir]);
+  }, [transactions, search, accountFilter, monthFilter, institutionFilter, sortKey, sortDir]);
 
   const visible = filtered.slice(0, showCount);
 
@@ -65,17 +73,24 @@ export function TransactionTable({ transactions }: { transactions: ChaseTransact
     return sortDir === "asc" ? " \u25B2" : " \u25BC";
   }
 
+  function resetFilters() {
+    setShowCount(50);
+  }
+
   return (
     <div className="transaction-table">
       <Filters
         search={search}
-        onSearchChange={(v) => { setSearch(v); setShowCount(50); }}
+        onSearchChange={(v) => { setSearch(v); resetFilters(); }}
         accountFilter={accountFilter}
-        onAccountFilterChange={(v) => { setAccountFilter(v); setShowCount(50); }}
+        onAccountFilterChange={(v) => { setAccountFilter(v); resetFilters(); }}
         monthFilter={monthFilter}
-        onMonthFilterChange={(v) => { setMonthFilter(v); setShowCount(50); }}
+        onMonthFilterChange={(v) => { setMonthFilter(v); resetFilters(); }}
+        institutionFilter={institutionFilter}
+        onInstitutionFilterChange={(v) => { setInstitutionFilter(v); resetFilters(); }}
         accountOptions={accountOptions}
-        monthOptions={monthOptions.map((m) => m.value)}
+        monthOptions={monthOptions}
+        institutionOptions={institutionOptions}
       />
       <div className="table-info">
         Showing {visible.length} of {filtered.length} transactions

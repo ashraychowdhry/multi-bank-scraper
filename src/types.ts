@@ -1,22 +1,52 @@
-export interface ChaseAccount {
+export type AccountType =
+  | "checking"
+  | "savings"
+  | "credit"
+  | "investment"
+  | "brokerage"
+  | "other";
+
+export interface Account {
   name: string;
-  type: "checking" | "savings" | "credit" | "investment" | "other";
+  type: AccountType;
   currentBalance: number;
   availableBalance?: number;
-  accountNumber: string; // last 4 digits
+  accountNumber: string;
+  institution: string;
 }
 
-export interface ChaseTransaction {
+export interface Transaction {
   date: string; // YYYY-MM-DD
   description: string;
   amount: number; // negative for debits, positive for credits
   category?: string;
   isPending: boolean;
   accountName: string;
+  institution: string;
+}
+
+export interface Holding {
+  ticker: string;
+  name: string;
+  shares: number;
+  currentPrice: number;
+  currentValue: number;
+  costBasis: number;
+  gainLoss: number;
+  gainLossPercent: number;
+  institution: string;
+}
+
+export interface ScraperResult {
+  institution: string;
+  accounts: Account[];
+  transactions: Transaction[];
+  holdings: Holding[];
 }
 
 export interface ScrapeResult {
   scrapedAt: string; // ISO timestamp
-  accounts: ChaseAccount[];
-  transactions: ChaseTransaction[];
+  accounts: Account[];
+  transactions: Transaction[];
+  holdings: Holding[];
 }

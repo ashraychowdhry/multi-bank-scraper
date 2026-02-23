@@ -1,31 +1,42 @@
 import "dotenv/config";
 
-export interface Config {
-  chaseUsername: string;
-  chasePassword: string;
+export interface GlobalConfig {
   headless: boolean;
-  authStatePath: string;
-  outputDir: string;
   slowMo: number;
+  outputDir: string;
+  enabledScrapers: string[];
 }
 
-export function loadConfig(): Config {
-  const username = process.env.CHASE_USERNAME;
-  const password = process.env.CHASE_PASSWORD;
+export function loadGlobalConfig(): GlobalConfig {
+  return {
+    headless: process.env.HEADLESS !== "false",
+    slowMo: parseInt(process.env.SLOW_MO || "50", 10),
+    outputDir: process.env.OUTPUT_DIR || "output",
+    enabledScrapers: (process.env.SCRAPERS || "chase")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  };
+}
 
-  if (!username || !password) {
-    console.error(
-      "Error: CHASE_USERNAME and CHASE_PASSWORD must be set in .env"
-    );
-    process.exit(1);
+export function loadScraperConfig(
+  scraperName: string,
+  global: GlobalConfig
+): import("./scrapers/interface.js").ScraperConfig {
+  const prefix = scraperName.toUpperCase();
+
+  const credentials: Record<string, string> = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.startsWith(`${prefix}_`) && value) {
+      const credKey = key.slice(prefix.length + 1).toLowerCase();
+      credentials[credKey] = value;
+    }
   }
 
   return {
-    chaseUsername: username,
-    chasePassword: password,
-    headless: process.env.HEADLESS !== "false",
-    authStatePath: process.env.AUTH_STATE_PATH || ".auth/chase-state.json",
-    outputDir: process.env.OUTPUT_DIR || "output",
-    slowMo: parseInt(process.env.SLOW_MO || "50", 10),
+    headless: global.headless,
+    slowMo: global.slowMo,
+    authStatePath: `.auth/${scraperName}-state.json`,
+    credentials,
   };
 }

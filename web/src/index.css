@@ -10,7 +10,12 @@
   --negative: #ef4444;
   --checking: #3b82f6;
   --savings: #22c55e;
+  --brokerage: #8b5cf6;
+  --credit: #f59e0b;
+  --investment: #06b6d4;
   --total-bg: #1e293b;
+  --chase-color: #0060f0;
+  --robinhood-color: #00c805;
 }
 
 *,
@@ -30,7 +35,7 @@ body {
 }
 
 .app {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 24px;
 }
@@ -105,12 +110,108 @@ body {
   border-bottom-color: var(--accent);
 }
 
+/* =================== */
+/* Net Worth Banner    */
+/* =================== */
+.net-worth-banner {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 28px;
+}
+
+.net-worth-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.net-worth-label {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.net-worth-value {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+
+.net-worth-breakdown {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.breakdown-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.breakdown-dot.banking { background: var(--checking); }
+.breakdown-dot.investment { background: var(--brokerage); }
+.breakdown-dot.gain { background: var(--positive); }
+.breakdown-dot.loss { background: var(--negative); }
+
+.breakdown-label {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.breakdown-value {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.breakdown-value.positive { color: var(--positive); }
+.breakdown-value.negative { color: var(--negative); }
+
+/* =================== */
+/* Institution Section */
+/* =================== */
+.institution-section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.institution-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.institution-dot.chase { background: var(--chase-color); }
+.institution-dot.robinhood { background: var(--robinhood-color); }
+
 /* Account Cards */
 .accounts-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
-  margin-bottom: 28px;
 }
 
 .account-card {
@@ -131,16 +232,21 @@ body {
   height: 3px;
 }
 
-.account-card.checking::before {
-  background: var(--checking);
-}
-
-.account-card.savings::before {
-  background: var(--savings);
-}
+.account-card.checking::before { background: var(--checking); }
+.account-card.savings::before { background: var(--savings); }
+.account-card.brokerage::before { background: var(--brokerage); }
+.account-card.credit::before { background: var(--credit); }
+.account-card.investment::before { background: var(--investment); }
 
 .account-card.total::before {
-  background: linear-gradient(90deg, var(--checking), var(--savings));
+  background: linear-gradient(90deg, var(--checking), var(--brokerage), var(--savings));
+}
+
+.account-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .account-type {
@@ -150,7 +256,6 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: var(--text-muted);
-  margin-bottom: 8px;
 }
 
 .account-card h3 {
@@ -167,12 +272,20 @@ body {
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.5px;
+  display: block;
+}
+
+.available-balance {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
 }
 
 /* Stats Row */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   margin-bottom: 28px;
 }
@@ -197,12 +310,12 @@ body {
   font-weight: 700;
 }
 
-.stat-value.positive {
-  color: var(--positive);
-}
+.stat-value.positive { color: var(--positive); }
+.stat-value.negative { color: var(--negative); }
 
-.stat-value.negative {
-  color: var(--negative);
+.stat-pct {
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .stat-detail {
@@ -212,6 +325,129 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ===================== */
+/* Portfolio Grid        */
+/* ===================== */
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+/* ===================== */
+/* Top Holdings          */
+/* ===================== */
+.top-holdings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.allocation-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 140px;
+  gap: 12px;
+  align-items: center;
+}
+
+.allocation-label {
+  display: flex;
+  flex-direction: column;
+}
+
+.allocation-ticker {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.allocation-name {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.allocation-bar-track {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.allocation-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.allocation-bar-fill.gain { background: var(--positive); }
+.allocation-bar-fill.loss { background: var(--negative); }
+
+.allocation-values {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.allocation-value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.allocation-pct {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* ===================== */
+/* Top Movers            */
+/* ===================== */
+.top-movers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.movers-col h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.mover-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.mover-row:last-child {
+  border-bottom: none;
+}
+
+.mover-ticker {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.mover-gain {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mover-gain.positive { color: var(--positive); }
+.mover-gain.negative { color: var(--negative); }
 
 /* Chart */
 .chart-section {
@@ -302,13 +538,8 @@ body {
   border-radius: 2px;
 }
 
-.legend-dot.income {
-  background: var(--positive);
-}
-
-.legend-dot.spending {
-  background: var(--negative);
-}
+.legend-dot.income { background: var(--positive); }
+.legend-dot.spending { background: var(--negative); }
 
 /* Filters */
 .filters {
@@ -355,6 +586,53 @@ body {
   border-color: var(--accent);
 }
 
+/* ===================== */
+/* Holdings Controls     */
+/* ===================== */
+.holdings-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.asset-filter {
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.asset-filter button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.asset-filter button:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.asset-filter button.active {
+  color: var(--text);
+  background: var(--accent);
+}
+
+.holdings-search {
+  flex: 1;
+  min-width: 180px;
+  max-width: 300px;
+}
+
 /* Transaction Table */
 .transaction-table {
   width: 100%;
@@ -387,7 +665,7 @@ th {
   background: var(--surface);
   padding: 12px 16px;
   text-align: left;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -411,7 +689,7 @@ td.amount-col {
 }
 
 td {
-  padding: 12px 16px;
+  padding: 10px 16px;
   font-size: 14px;
   border-bottom: 1px solid var(--border);
 }
@@ -422,6 +700,15 @@ tbody tr:hover {
 
 tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* Totals footer row */
+tfoot .totals-row td {
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  border-top: 2px solid var(--border);
+  background: var(--surface);
 }
 
 .date-col {
@@ -437,10 +724,27 @@ tbody tr:last-child td {
   white-space: nowrap;
 }
 
+.name-col {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 .account-col {
   font-size: 13px;
   color: var(--text-muted);
   white-space: nowrap;
+}
+
+.shares-col {
+  font-variant-numeric: tabular-nums;
+}
+
+.amount-col {
+  font-variant-numeric: tabular-nums;
 }
 
 .amount-col.positive {
@@ -482,7 +786,69 @@ tbody tr:last-child td {
   background: var(--surface-hover);
 }
 
-/* Responsive */
+/* Holdings Table extras */
+.holdings-table {
+  width: 100%;
+}
+
+.holdings-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ticker-col {
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* Weight column inline bar */
+.weight-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+}
+
+.weight-bar-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 40px;
+}
+
+.weight-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+.weight-col span {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* =================== */
+/* Responsive          */
+/* =================== */
+@media (max-width: 900px) {
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .top-movers {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
 @media (max-width: 768px) {
   .app {
     padding: 16px;
@@ -497,12 +863,21 @@ tbody tr:last-child td {
     font-size: 22px;
   }
 
+  .net-worth-value {
+    font-size: 32px;
+  }
+
+  .net-worth-breakdown {
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .accounts-row {
     grid-template-columns: 1fr;
   }
 
   .stats-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
   .account-card .balance {
@@ -523,5 +898,18 @@ tbody tr:last-child td {
 
   .desc-col {
     max-width: 200px;
+  }
+
+  .holdings-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .holdings-search {
+    max-width: unset;
+  }
+
+  .allocation-row {
+    grid-template-columns: 80px 1fr 100px;
   }
 }

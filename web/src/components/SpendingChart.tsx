@@ -1,4 +1,4 @@
-import type { ChaseTransaction } from "../types";
+import type { Transaction } from "@shared/types";
 import { formatCurrency, formatMonthLabel } from "../utils/format";
 
 interface MonthlyTotal {
@@ -8,7 +8,7 @@ interface MonthlyTotal {
   spending: number;
 }
 
-function computeMonthlyTotals(transactions: ChaseTransaction[]): MonthlyTotal[] {
+function computeMonthlyTotals(transactions: Transaction[]): MonthlyTotal[] {
   const map = new Map<string, { income: number; spending: number }>();
   for (const t of transactions) {
     const month = t.date.slice(0, 7);
@@ -26,7 +26,7 @@ function computeMonthlyTotals(transactions: ChaseTransaction[]): MonthlyTotal[] 
     }));
 }
 
-export function SpendingChart({ transactions }: { transactions: ChaseTransaction[] }) {
+export function SpendingChart({ transactions }: { transactions: Transaction[] }) {
   const data = computeMonthlyTotals(transactions);
   const maxVal = Math.max(
     ...data.flatMap((m) => [m.income, Math.abs(m.spending)]),

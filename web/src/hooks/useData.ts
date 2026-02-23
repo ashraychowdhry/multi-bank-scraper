@@ -1,5 +1,25 @@
 import { useState, useEffect } from "react";
-import type { ScrapeResult } from "../types";
+import type { ScrapeResult } from "@shared/types";
+
+// Normalize data from older formats that may lack `institution` or `holdings` fields
+function normalize(raw: Record<string, unknown>): ScrapeResult {
+  const data = raw as unknown as ScrapeResult;
+  return {
+    scrapedAt: data.scrapedAt,
+    accounts: (data.accounts || []).map((a) => ({
+      ...a,
+      institution: a.institution || "chase",
+    })),
+    transactions: (data.transactions || []).map((t) => ({
+      ...t,
+      institution: t.institution || "chase",
+    })),
+    holdings: (data.holdings || []).map((h) => ({
+      ...h,
+      institution: h.institution || "unknown",
+    })),
+  };
+}
 
 export function useData() {
   const [data, setData] = useState<ScrapeResult | null>(null);
@@ -12,7 +32,7 @@ export function useData() {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then((json) => setData(json as ScrapeResult))
+      .then((json) => setData(normalize(json)))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);

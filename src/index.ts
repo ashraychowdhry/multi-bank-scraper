@@ -2,80 +2,89 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
-import { loadConfig } from "./config.js";
-import {
-  launchBrowser,
-  login,
-  saveSession,
-  scrapeAccounts,
-  scrapeTransactions,
-} from "./scraper.js";
-import { ScrapeResult } from "./types.js";
+import { loadGlobalConfig, loadScraperConfig } from "./config.js";
+import { scraperRegistry } from "./scrapers/registry.js";
+import type { ScrapeResult } from "./types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, "..");
 
 async function main() {
-  console.log("=== Chase Bank Scraper ===\n");
+  console.log("=== Bank Scraper ===\n");
 
-  const config = loadConfig();
-  const { browser, context, page } = await launchBrowser(config);
+  const globalConfig = loadGlobalConfig();
+  const enabledScrapers = globalConfig.enabledScrapers;
+  console.log(`Enabled scrapers: ${enabledScrapers.join(", ")}\n`);
 
-  try {
-    // Login
-    const loggedIn = await login(page, config);
-    if (!loggedIn) {
-      console.error("Failed to log in. Exiting.");
-      process.exit(1);
+  const combined: ScrapeResult = {
+    scrapedAt: new Date().toISOString(),
+    accounts: [],
+    transactions: [],
+    holdings: [],
+  };
+
+  for (const name of enabledScrapers) {
+    const factory = scraperRegistry[name];
+    if (!factory) {
+      console.warn(`Unknown scraper: "${name}" — skipping.`);
+      continue;
     }
 
-    await saveSession(context, config);
+    const scraperConfig = loadScraperConfig(name, globalConfig);
+    const scraper = factory();
 
-    // Scrape
-    const accounts = await scrapeAccounts(page);
-    const transactions = await scrapeTransactions(page, accounts);
-
-    // Output
-    const result: ScrapeResult = {
-      scrapedAt: new Date().toISOString(),
-      accounts,
-      transactions,
-    };
-
-    if (!fs.existsSync(config.outputDir)) {
-      fs.mkdirSync(config.outputDir, { recursive: true });
-    }
-
-    const outputFile = path.join(
-      config.outputDir,
-      `chase-${new Date().toISOString().split("T")[0]}.json`
-    );
-    fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
-    console.log(`\nResults written to: ${outputFile}`);
-
-    // Summary
-    console.log("\n=== Account Summary ===");
-    for (const acct of accounts) {
+    console.log(`\n--- Running ${scraper.displayName} scraper ---\n`);
+    try {
+      const result = await scraper.scrape(scraperConfig);
+      combined.accounts.push(...result.accounts);
+      combined.transactions.push(...result.transactions);
+      combined.holdings.push(...result.holdings);
       console.log(
-        `  ${acct.name} (${acct.type}): $${acct.currentBalance.toFixed(2)}`
+        `\n${scraper.displayName}: ${result.accounts.length} account(s), ` +
+          `${result.transactions.length} transaction(s), ` +
+          `${result.holdings.length} holding(s)`
       );
+    } catch (err) {
+      console.error(`${scraper.displayName} scraper failed:`, err);
     }
-    console.log(`\n${transactions.length} transaction(s) scraped.`);
-
-    await saveSession(context, config);
-
-    // Copy data for web dashboard
-    const webPublicDir = path.join(projectRoot, "web", "public");
-    if (!fs.existsSync(webPublicDir)) {
-      fs.mkdirSync(webPublicDir, { recursive: true });
-    }
-    fs.copyFileSync(outputFile, path.join(webPublicDir, "data.json"));
-  } catch (err) {
-    console.error("Scraper error:", err);
-    process.exit(1);
-  } finally {
-    await browser.close();
   }
+
+  // Output
+  if (!fs.existsSync(globalConfig.outputDir)) {
+    fs.mkdirSync(globalConfig.outputDir, { recursive: true });
+  }
+
+  const outputFile = path.join(
+    globalConfig.outputDir,
+    `scrape-${new Date().toISOString().split("T")[0]}.json`
+  );
+  fs.writeFileSync(outputFile, JSON.stringify(combined, null, 2));
+  console.log(`\nResults written to: ${outputFile}`);
+
+  // Summary
+  console.log("\n=== Account Summary ===");
+  for (const acct of combined.accounts) {
+    console.log(
+      `  [${acct.institution}] ${acct.name} (${acct.type}): $${acct.currentBalance.toFixed(2)}`
+    );
+  }
+  if (combined.holdings.length > 0) {
+    const totalHoldings = combined.holdings.reduce(
+      (s, h) => s + h.currentValue,
+      0
+    );
+    console.log(
+      `\n${combined.holdings.length} holding(s) worth $${totalHoldings.toFixed(2)}`
+    );
+  }
+  console.log(`${combined.transactions.length} transaction(s) scraped.`);
+
+  // Copy data for web dashboard
+  const webPublicDir = path.join(projectRoot, "web", "public");
+  if (!fs.existsSync(webPublicDir)) {
+    fs.mkdirSync(webPublicDir, { recursive: true });
+  }
+  fs.copyFileSync(outputFile, path.join(webPublicDir, "data.json"));
 
   // Launch dashboard
   if (process.env.NO_DASHBOARD !== "true") {
@@ -84,7 +93,9 @@ async function main() {
       cwd: projectRoot,
       stdio: "inherit",
     });
-    vite.on("error", (err) => console.error("Failed to launch dashboard:", err));
+    vite.on("error", (err) =>
+      console.error("Failed to launch dashboard:", err)
+    );
 
     process.on("SIGINT", () => {
       vite.kill();
