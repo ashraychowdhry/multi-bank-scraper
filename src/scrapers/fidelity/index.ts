@@ -34,7 +34,7 @@ export class FidelityScraper implements Scraper {
       const transactions = await scrapeTransactions(page);
       await saveSession(context, config.authStatePath);
 
-      // Strip internal accountNumber/accountName from holdings
+      // Strip internal accountNumber from holdings but keep accountName for dashboard
       const holdings = holdingsWithAccounts.map((h) => ({
         ticker: h.ticker,
         name: h.name,
@@ -44,6 +44,7 @@ export class FidelityScraper implements Scraper {
         costBasis: h.costBasis,
         gainLoss: h.gainLoss,
         gainLossPercent: h.gainLossPercent,
+        accountName: h.accountName,
       }));
 
       return {

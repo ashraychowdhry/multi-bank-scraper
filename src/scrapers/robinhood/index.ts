@@ -49,7 +49,7 @@ export class RobinhoodScraper implements Scraper {
           ...t,
           institution: "robinhood",
         })),
-        holdings: holdings.map((h) => ({ ...h, institution: "robinhood" })),
+        holdings: holdings.map((h) => ({ ...h, institution: "robinhood", accountName: "Robinhood Brokerage" })),
         cashInterest: cashInterest || undefined,
         stockLending: stockLending || undefined,
       };

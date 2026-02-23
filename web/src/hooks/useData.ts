@@ -17,6 +17,7 @@ function normalize(raw: Record<string, unknown>): ScrapeResult {
     holdings: (data.holdings || []).map((h) => ({
       ...h,
       institution: h.institution || "unknown",
+      accountName: h.accountName || `${(h.institution || "unknown").charAt(0).toUpperCase() + (h.institution || "unknown").slice(1)} Account`,
     })),
     cashInterest: data.cashInterest,
     stockLending: data.stockLending,

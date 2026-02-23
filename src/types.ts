@@ -35,6 +35,7 @@ export interface Holding {
   gainLoss: number;
   gainLossPercent: number;
   institution: string;
+  accountName?: string;
 }
 
 export interface CashInterest {

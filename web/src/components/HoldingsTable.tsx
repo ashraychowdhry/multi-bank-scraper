@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import type { Holding } from "@shared/types";
 import { formatCurrency } from "../utils/format";
+import { aggregateHoldings, type AggregatedHolding } from "../utils/aggregateHoldings";
 
 type SortKey = "ticker" | "name" | "currentValue" | "gainLoss" | "shares" | "gainLossPercent" | "currentPrice" | "costBasis";
 type SortDir = "asc" | "desc";
@@ -13,7 +14,7 @@ const CRYPTO_TICKERS = new Set([
   "XTZ", "ZRX", "BAT",
 ]);
 
-function isCrypto(h: Holding): boolean {
+function isCrypto(h: { ticker: string }): boolean {
   return CRYPTO_TICKERS.has(h.ticker);
 }
 
@@ -28,24 +29,37 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
   const [search, setSearch] = useState("");
   const [assetFilter, setAssetFilter] = useState<AssetFilter>("all");
   const [institutionFilter, setInstitutionFilter] = useState("all");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const institutionOptions = useMemo(
     () => [...new Set(holdings.map((h) => h.institution))].sort(),
     [holdings]
   );
 
-  const totalValue = holdings.reduce((s, h) => s + h.currentValue, 0);
+  // Total portfolio value from ALL holdings (for weight calculations)
+  const totalValue = useMemo(
+    () => holdings.reduce((s, h) => s + h.currentValue, 0),
+    [holdings]
+  );
+
+  // Aggregate all holdings for unfiltered summary stats
+  const allAggregated = useMemo(() => aggregateHoldings(holdings), [holdings]);
   const totalCost = holdings.reduce((s, h) => s + h.costBasis, 0);
   const totalGainLoss = holdings.reduce((s, h) => s + h.gainLoss, 0);
   const totalGainLossPercent = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
 
-  const stocksCount = holdings.filter((h) => !isCrypto(h)).length;
-  const cryptoCount = holdings.filter(isCrypto).length;
+  const stocksCount = allAggregated.filter((h) => !isCrypto(h)).length;
+  const cryptoCount = allAggregated.filter(isCrypto).length;
 
+  // Filter raw holdings by institution FIRST, then aggregate
   const filtered = useMemo(() => {
-    let items = [...holdings];
+    let rawFiltered = [...holdings];
+    if (institutionFilter !== "all") {
+      rawFiltered = rawFiltered.filter((h) => h.institution === institutionFilter);
+    }
 
-    if (institutionFilter !== "all") items = items.filter((h) => h.institution === institutionFilter);
+    let items = aggregateHoldings(rawFiltered);
+
     if (assetFilter === "stocks") items = items.filter((h) => !isCrypto(h));
     if (assetFilter === "crypto") items = items.filter(isCrypto);
 
@@ -76,12 +90,23 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
   const filteredGainLoss = filtered.reduce((s, h) => s + h.gainLoss, 0);
   const filteredGainLossPercent = filteredCost > 0 ? (filteredGainLoss / filteredCost) * 100 : 0;
 
-  // Use filtered totals when a filter is active
   const hasActiveFilter = assetFilter !== "all" || institutionFilter !== "all" || search;
   const displayValue = hasActiveFilter ? filteredValue : totalValue;
   const displayCost = hasActiveFilter ? filteredCost : totalCost;
   const displayGainLoss = hasActiveFilter ? filteredGainLoss : totalGainLoss;
   const displayGainLossPercent = hasActiveFilter ? filteredGainLossPercent : totalGainLossPercent;
+
+  // Weight base: use filtered total when institution filter active, otherwise total portfolio
+  const weightBase = institutionFilter !== "all" ? filteredValue : totalValue;
+
+  function toggleExpand(ticker: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(ticker)) next.delete(ticker);
+      else next.add(ticker);
+      return next;
+    });
+  }
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -125,7 +150,7 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
             className={assetFilter === "all" ? "active" : ""}
             onClick={() => setAssetFilter("all")}
           >
-            All ({holdings.length})
+            All ({allAggregated.length})
           </button>
           <button
             className={assetFilter === "stocks" ? "active" : ""}
@@ -166,8 +191,9 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
       </div>
 
       <div className="table-info">
-        {filtered.length} holding{filtered.length !== 1 ? "s" : ""}
-        {hasActiveFilter && ` (filtered)`}
+        {filtered.length} ticker{filtered.length !== 1 ? "s" : ""}
+        {filtered.length !== holdings.length && ` (${holdings.length} positions)`}
+        {hasActiveFilter && " \u2014 filtered"}
       </div>
 
       <div className="table-wrapper">
@@ -203,28 +229,67 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
           </thead>
           <tbody>
             {filtered.map((h) => {
-              const weight = totalValue > 0 ? (h.currentValue / totalValue) * 100 : 0;
+              const isExpanded = expanded.has(h.ticker);
+              const weight = weightBase > 0 ? (h.currentValue / weightBase) * 100 : 0;
               return (
-                <tr key={h.ticker}>
-                  <td className="ticker-col">{h.ticker}</td>
-                  <td className="name-col">{h.name !== h.ticker ? h.name : ""}</td>
-                  <td className="amount-col shares-col">{formatShares(h.shares)}</td>
-                  <td className="amount-col">{formatCurrency(h.currentPrice)}</td>
-                  <td className="amount-col">{formatCurrency(h.currentValue)}</td>
-                  <td className="amount-col">{formatCurrency(h.costBasis)}</td>
-                  <td className={`amount-col ${h.gainLoss >= 0 ? "positive" : "negative"}`}>
-                    {h.gainLoss >= 0 ? "+" : ""}{formatCurrency(h.gainLoss)}
-                  </td>
-                  <td className={`amount-col ${h.gainLossPercent >= 0 ? "positive" : "negative"}`}>
-                    {h.gainLossPercent >= 0 ? "+" : ""}{h.gainLossPercent.toFixed(1)}%
-                  </td>
-                  <td className="amount-col weight-col">
-                    <div className="weight-bar-track">
-                      <div className="weight-bar-fill" style={{ width: `${Math.min(weight, 100)}%` }} />
-                    </div>
-                    <span>{weight.toFixed(1)}%</span>
-                  </td>
-                </tr>
+                <Fragment key={h.ticker}>
+                  <tr
+                    className={`${h.isDuplicate ? "expandable-row" : ""} ${isExpanded ? "expanded" : ""}`}
+                    onClick={() => h.isDuplicate && toggleExpand(h.ticker)}
+                  >
+                    <td className="ticker-col">
+                      {h.isDuplicate && (
+                        <span className={`expand-chevron ${isExpanded ? "open" : ""}`}>&#9654;</span>
+                      )}
+                      {h.ticker}
+                      {h.isDuplicate && (
+                        <span className="account-count">{h.children.length}</span>
+                      )}
+                    </td>
+                    <td className="name-col">{h.name !== h.ticker ? h.name : ""}</td>
+                    <td className="amount-col shares-col">{formatShares(h.shares)}</td>
+                    <td className="amount-col">{formatCurrency(h.currentPrice)}</td>
+                    <td className="amount-col">{formatCurrency(h.currentValue)}</td>
+                    <td className="amount-col">{formatCurrency(h.costBasis)}</td>
+                    <td className={`amount-col ${h.gainLoss >= 0 ? "positive" : "negative"}`}>
+                      {h.gainLoss >= 0 ? "+" : ""}{formatCurrency(h.gainLoss)}
+                    </td>
+                    <td className={`amount-col ${h.gainLossPercent >= 0 ? "positive" : "negative"}`}>
+                      {h.gainLossPercent >= 0 ? "+" : ""}{h.gainLossPercent.toFixed(1)}%
+                    </td>
+                    <td className="amount-col weight-col">
+                      <div className="weight-bar-track">
+                        <div className="weight-bar-fill" style={{ width: `${Math.min(weight, 100)}%` }} />
+                      </div>
+                      <span>{weight.toFixed(1)}%</span>
+                    </td>
+                  </tr>
+                  {isExpanded && h.children.map((child, idx) => {
+                    const childWeight = weightBase > 0 ? (child.currentValue / weightBase) * 100 : 0;
+                    return (
+                      <tr key={`${h.ticker}-${child.institution}-${child.accountName}-${idx}`} className="holdings-sub-row">
+                        <td className="sub-ticker">
+                          <span className={`institution-dot ${child.institution}`} />
+                          {child.accountName || child.institution}
+                        </td>
+                        <td className="name-col"></td>
+                        <td className="amount-col shares-col">{formatShares(child.shares)}</td>
+                        <td className="amount-col">{formatCurrency(child.currentPrice)}</td>
+                        <td className="amount-col">{formatCurrency(child.currentValue)}</td>
+                        <td className="amount-col">{formatCurrency(child.costBasis)}</td>
+                        <td className={`amount-col ${child.gainLoss >= 0 ? "positive" : "negative"}`}>
+                          {child.gainLoss >= 0 ? "+" : ""}{formatCurrency(child.gainLoss)}
+                        </td>
+                        <td className={`amount-col ${child.gainLossPercent >= 0 ? "positive" : "negative"}`}>
+                          {child.gainLossPercent >= 0 ? "+" : ""}{child.gainLossPercent.toFixed(1)}%
+                        </td>
+                        <td className="amount-col weight-col">
+                          <span className="sub-weight">{childWeight.toFixed(1)}%</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </Fragment>
               );
             })}
           </tbody>

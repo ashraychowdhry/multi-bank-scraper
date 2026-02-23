@@ -12,7 +12,22 @@
       "WebFetch(domain:api.anthropic.com)",
       "Bash(node:*)",
       "Bash(npx vite:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(SCRAPERS=robinhood HEADLESS=false NO_DASHBOARD=true npx tsx:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:scrapling.readthedocs.io)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(SCRAPERS=robinhood HEADLESS=true NO_DASHBOARD=true npx tsx:*)",
+      "Bash(SCRAPERS=chase,robinhood HEADLESS=true NO_DASHBOARD=true npx tsx:*)",
+      "Bash(git add:*)",
+      "Bash(head:*)",
+      "WebFetch(domain:usefidelity.com)",
+      "Bash(SCRAPERS=fidelity HEADLESS=false NO_DASHBOARD=true npx tsx:*)",
+      "Bash(npx playwright:*)",
+      "Bash(SCRAPERS=fidelity NO_DASHBOARD=true npx tsx:*)",
+      "Bash(SCRAPERS=fidelity npx tsx:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(SCRAPERS=chase,robinhood,fidelity npx tsx:*)"
     ]
   }
 }

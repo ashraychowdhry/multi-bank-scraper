@@ -1,5 +1,6 @@
 import type { ScrapeResult, Account, Holding, CashInterest, StockLendingIncome } from "@shared/types";
 import { formatCurrency } from "../utils/format";
+import { aggregateHoldings, type AggregatedHolding } from "../utils/aggregateHoldings";
 import { AccountCard } from "./AccountCard";
 import { SpendingChart } from "./SpendingChart";
 
@@ -13,9 +14,10 @@ function groupBy<T>(items: T[], key: (item: T) => string): Record<string, T[]> {
 }
 
 function TopHoldings({ holdings }: { holdings: Holding[] }) {
-  const sorted = [...holdings].sort((a, b) => b.currentValue - a.currentValue);
+  const aggregated = aggregateHoldings(holdings);
+  const sorted = [...aggregated].sort((a, b) => b.currentValue - a.currentValue);
   const top = sorted.slice(0, 8);
-  const totalValue = holdings.reduce((s, h) => s + h.currentValue, 0);
+  const totalValue = aggregated.reduce((s, h) => s + h.currentValue, 0);
 
   return (
     <div className="top-holdings">
@@ -112,7 +114,8 @@ function StockLendingCard({ data }: { data: StockLendingIncome }) {
 }
 
 function TopMovers({ holdings }: { holdings: Holding[] }) {
-  const withBasis = holdings.filter((h) => h.costBasis > 0);
+  const aggregated = aggregateHoldings(holdings);
+  const withBasis = aggregated.filter((h) => h.costBasis > 0);
   const gainers = [...withBasis].sort((a, b) => b.gainLoss - a.gainLoss).slice(0, 3);
   const losers = [...withBasis].sort((a, b) => a.gainLoss - b.gainLoss).slice(0, 3);
 
