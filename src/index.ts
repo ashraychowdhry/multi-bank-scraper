@@ -22,6 +22,9 @@ async function main() {
     transactions: [],
     holdings: [],
   };
+  // Collect optional data from scrapers that provide it
+  let cashInterest: ScrapeResult["cashInterest"];
+  let stockLending: ScrapeResult["stockLending"];
 
   for (const name of enabledScrapers) {
     const factory = scraperRegistry[name];
@@ -39,6 +42,8 @@ async function main() {
       combined.accounts.push(...result.accounts);
       combined.transactions.push(...result.transactions);
       combined.holdings.push(...result.holdings);
+      if (result.cashInterest) cashInterest = result.cashInterest;
+      if (result.stockLending) stockLending = result.stockLending;
       console.log(
         `\n${scraper.displayName}: ${result.accounts.length} account(s), ` +
           `${result.transactions.length} transaction(s), ` +
@@ -53,6 +58,10 @@ async function main() {
   if (!fs.existsSync(globalConfig.outputDir)) {
     fs.mkdirSync(globalConfig.outputDir, { recursive: true });
   }
+
+  // Attach optional data
+  if (cashInterest) combined.cashInterest = cashInterest;
+  if (stockLending) combined.stockLending = stockLending;
 
   const outputFile = path.join(
     globalConfig.outputDir,

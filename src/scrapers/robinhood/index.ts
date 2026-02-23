@@ -2,8 +2,10 @@ import type { Scraper, ScraperConfig } from "../interface.js";
 import type { ScraperResult } from "../../types.js";
 import { launchBrowser, saveSession } from "../browser.js";
 import { login } from "./login.js";
-import { scrapeAccounts, scrapeCash } from "./accounts.js";
+import { scrapeAccounts, scrapeCash, scrapeCashInterest } from "./accounts.js";
 import { scrapeHoldings } from "./holdings.js";
+import { scrapeTransactions } from "./transactions.js";
+import { scrapeStockLending } from "./stock-lending.js";
 
 export class RobinhoodScraper implements Scraper {
   readonly name = "robinhood";
@@ -27,16 +29,29 @@ export class RobinhoodScraper implements Scraper {
 
       const accounts = await scrapeAccounts(page);
       const holdings = await scrapeHoldings(page);
-      // Page is now on /account/investing — scrape cash from same page
+      // Page is now on /account/investing — scrape cash + interest from same page
       const cash = await scrapeCash(page);
       if (cash) accounts.push(cash);
+      const cashInterest = await scrapeCashInterest(page);
+
+      // Scrape transaction history
+      const transactions = await scrapeTransactions(page);
+
+      // Scrape stock lending income
+      const stockLending = await scrapeStockLending(page);
+
       await saveSession(context, config.authStatePath);
 
       return {
         institution: "robinhood",
         accounts: accounts.map((a) => ({ ...a, institution: "robinhood" })),
-        transactions: [],
+        transactions: transactions.map((t) => ({
+          ...t,
+          institution: "robinhood",
+        })),
         holdings: holdings.map((h) => ({ ...h, institution: "robinhood" })),
+        cashInterest: cashInterest || undefined,
+        stockLending: stockLending || undefined,
       };
     } finally {
       await browser.close();

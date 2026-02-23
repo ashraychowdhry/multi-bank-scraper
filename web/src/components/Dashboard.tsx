@@ -1,4 +1,4 @@
-import type { ScrapeResult, Account, Holding } from "@shared/types";
+import type { ScrapeResult, Account, Holding, CashInterest, StockLendingIncome } from "@shared/types";
 import { formatCurrency } from "../utils/format";
 import { AccountCard } from "./AccountCard";
 import { SpendingChart } from "./SpendingChart";
@@ -40,6 +40,73 @@ function TopHoldings({ holdings }: { holdings: Holding[] }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function CashInterestCard({ data }: { data: CashInterest }) {
+  return (
+    <div className="interest-card">
+      <div className="interest-header">
+        <h3>Cash Interest</h3>
+        <span className="interest-apy">{data.apy}% APY</span>
+      </div>
+      <div className="interest-stats">
+        <div className="interest-stat">
+          <span className="interest-stat-label">Accrued This Month</span>
+          <span className="interest-stat-value positive">
+            {formatCurrency(data.interestAccruedThisMonth)}
+          </span>
+        </div>
+        <div className="interest-stat">
+          <span className="interest-stat-label">Lifetime Interest Earned</span>
+          <span className="interest-stat-value positive">
+            {formatCurrency(data.lifetimeInterestPaid)}
+          </span>
+        </div>
+        <div className="interest-stat">
+          <span className="interest-stat-label">Cash Earning Interest</span>
+          <span className="interest-stat-value">
+            {formatCurrency(data.cashEarningInterest)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StockLendingCard({ data }: { data: StockLendingIncome }) {
+  return (
+    <div className="lending-card">
+      <h3>Stock Lending Income</h3>
+      <div className="lending-summary">
+        <div className="lending-stat">
+          <span className="lending-stat-label">Last Month</span>
+          <span className="lending-stat-value positive">
+            {formatCurrency(data.lastMonth)}
+          </span>
+        </div>
+        <div className="lending-stat">
+          <span className="lending-stat-label">Total Earned</span>
+          <span className="lending-stat-value positive">
+            {formatCurrency(data.total)}
+          </span>
+        </div>
+      </div>
+      {data.stocksOnLoan.length > 0 && (
+        <div className="lending-stocks">
+          <span className="lending-stocks-label">
+            {data.stocksOnLoan.length} stocks on loan
+          </span>
+          <div className="lending-tickers">
+            {data.stocksOnLoan.map((s) => (
+              <span key={s.ticker} className="lending-ticker" title={`${s.name} — ${s.shares} shares`}>
+                {s.ticker}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -190,6 +257,14 @@ export function Dashboard({ data }: { data: ScrapeResult }) {
           </>
         )}
       </section>
+
+      {/* Passive Income: Interest + Stock Lending */}
+      {(data.cashInterest || data.stockLending) && (
+        <div className="passive-income-grid">
+          {data.cashInterest && <CashInterestCard data={data.cashInterest} />}
+          {data.stockLending && <StockLendingCard data={data.stockLending} />}
+        </div>
+      )}
 
       {/* Portfolio Allocation + Top Movers */}
       {data.holdings.length > 0 && (

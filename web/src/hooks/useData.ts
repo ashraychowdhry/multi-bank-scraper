@@ -18,6 +18,8 @@ function normalize(raw: Record<string, unknown>): ScrapeResult {
       ...h,
       institution: h.institution || "unknown",
     })),
+    cashInterest: data.cashInterest,
+    stockLending: data.stockLending,
   };
 }
 

@@ -37,11 +37,26 @@ export interface Holding {
   institution: string;
 }
 
+export interface CashInterest {
+  apy: number; // e.g. 3.35
+  cashEarningInterest: number;
+  interestAccruedThisMonth: number;
+  lifetimeInterestPaid: number;
+}
+
+export interface StockLendingIncome {
+  lastMonth: number;
+  total: number;
+  stocksOnLoan: { ticker: string; name: string; shares: number }[];
+}
+
 export interface ScraperResult {
   institution: string;
   accounts: Account[];
   transactions: Transaction[];
   holdings: Holding[];
+  cashInterest?: CashInterest;
+  stockLending?: StockLendingIncome;
 }
 
 export interface ScrapeResult {
@@ -49,4 +64,6 @@ export interface ScrapeResult {
   accounts: Account[];
   transactions: Transaction[];
   holdings: Holding[];
+  cashInterest?: CashInterest;
+  stockLending?: StockLendingIncome;
 }
