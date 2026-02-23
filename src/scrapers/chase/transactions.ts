@@ -61,7 +61,8 @@ export async function scrapeTransactions(
     }
 
     // Always return to dashboard for next account
-    await page.goto(DASHBOARD_URL, { waitUntil: "networkidle" });
+    await page.goto(DASHBOARD_URL, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector('[data-testid="accountTile"]', { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(1500);
   }
 

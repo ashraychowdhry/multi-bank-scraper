@@ -27,6 +27,12 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [search, setSearch] = useState("");
   const [assetFilter, setAssetFilter] = useState<AssetFilter>("all");
+  const [institutionFilter, setInstitutionFilter] = useState("all");
+
+  const institutionOptions = useMemo(
+    () => [...new Set(holdings.map((h) => h.institution))].sort(),
+    [holdings]
+  );
 
   const totalValue = holdings.reduce((s, h) => s + h.currentValue, 0);
   const totalCost = holdings.reduce((s, h) => s + h.costBasis, 0);
@@ -39,6 +45,7 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
   const filtered = useMemo(() => {
     let items = [...holdings];
 
+    if (institutionFilter !== "all") items = items.filter((h) => h.institution === institutionFilter);
     if (assetFilter === "stocks") items = items.filter((h) => !isCrypto(h));
     if (assetFilter === "crypto") items = items.filter(isCrypto);
 
@@ -62,7 +69,7 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
     });
 
     return items;
-  }, [holdings, search, assetFilter, sortKey, sortDir]);
+  }, [holdings, search, assetFilter, institutionFilter, sortKey, sortDir]);
 
   const filteredValue = filtered.reduce((s, h) => s + h.currentValue, 0);
   const filteredCost = filtered.reduce((s, h) => s + h.costBasis, 0);
@@ -70,10 +77,11 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
   const filteredGainLossPercent = filteredCost > 0 ? (filteredGainLoss / filteredCost) * 100 : 0;
 
   // Use filtered totals when a filter is active
-  const displayValue = assetFilter !== "all" || search ? filteredValue : totalValue;
-  const displayCost = assetFilter !== "all" || search ? filteredCost : totalCost;
-  const displayGainLoss = assetFilter !== "all" || search ? filteredGainLoss : totalGainLoss;
-  const displayGainLossPercent = assetFilter !== "all" || search ? filteredGainLossPercent : totalGainLossPercent;
+  const hasActiveFilter = assetFilter !== "all" || institutionFilter !== "all" || search;
+  const displayValue = hasActiveFilter ? filteredValue : totalValue;
+  const displayCost = hasActiveFilter ? filteredCost : totalCost;
+  const displayGainLoss = hasActiveFilter ? filteredGainLoss : totalGainLoss;
+  const displayGainLossPercent = hasActiveFilter ? filteredGainLossPercent : totalGainLossPercent;
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -132,18 +140,34 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
             Crypto ({cryptoCount})
           </button>
         </div>
-        <input
-          type="text"
-          placeholder="Search ticker or name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="filter-search holdings-search"
-        />
+        <div className="holdings-filters-right">
+          {institutionOptions.length > 1 && (
+            <select
+              value={institutionFilter}
+              onChange={(e) => setInstitutionFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All institutions</option>
+              {institutionOptions.map((inst) => (
+                <option key={inst} value={inst}>
+                  {inst.charAt(0).toUpperCase() + inst.slice(1)}
+                </option>
+              ))}
+            </select>
+          )}
+          <input
+            type="text"
+            placeholder="Search ticker or name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="filter-search holdings-search"
+          />
+        </div>
       </div>
 
       <div className="table-info">
         {filtered.length} holding{filtered.length !== 1 ? "s" : ""}
-        {(assetFilter !== "all" || search) && ` (filtered)`}
+        {hasActiveFilter && ` (filtered)`}
       </div>
 
       <div className="table-wrapper">

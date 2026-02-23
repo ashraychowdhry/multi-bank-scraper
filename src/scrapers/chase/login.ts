@@ -15,7 +15,7 @@ export async function login(
   // Try loading the dashboard directly — if session cookies are valid
   // this skips login entirely.
   console.log("[chase] Checking for active session...");
-  await page.goto(DASHBOARD_URL, { waitUntil: "networkidle", timeout: 20000 });
+  await page.goto(DASHBOARD_URL, { waitUntil: "domcontentloaded", timeout: 20000 });
 
   if (await isLoggedIn(page)) {
     console.log("[chase] Already logged in via saved session!");
@@ -24,7 +24,7 @@ export async function login(
 
   // Session expired or doesn't exist — go to login page
   console.log("[chase] Session not active. Navigating to login...");
-  await page.goto(LOGIN_URL, { waitUntil: "networkidle", timeout: 20000 });
+  await page.goto(LOGIN_URL, { waitUntil: "domcontentloaded", timeout: 20000 });
 
   const userIdInput = page.locator("#userId-input-field-input");
   await userIdInput.waitFor({ state: "visible", timeout: 10000 });

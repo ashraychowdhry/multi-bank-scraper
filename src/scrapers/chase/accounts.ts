@@ -15,7 +15,7 @@ export async function scrapeAccounts(page: Page): Promise<ChaseAccountData[]> {
   console.log("[chase] Scraping accounts from dashboard...");
 
   if (!page.url().includes("dashboard")) {
-    await page.goto(DASHBOARD_URL, { waitUntil: "networkidle" });
+    await page.goto(DASHBOARD_URL, { waitUntil: "domcontentloaded" });
   }
 
   await page.waitForSelector('[data-testid="accountTile"]', {
