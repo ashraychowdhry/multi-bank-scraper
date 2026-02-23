@@ -9,7 +9,10 @@
       "Bash(npx tsx:*)",
       "Bash(npx tsc:*)",
       "Bash(HEADLESS=false npx tsx:*)",
-      "WebFetch(domain:api.anthropic.com)"
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(node:*)",
+      "Bash(npx vite:*)",
+      "Bash(curl:*)"
     ]
   }
 }

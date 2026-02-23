@@ -3,3 +3,5 @@ dist/
 .env
 .auth/
 output/
+web/public/data.json
+web/dist/

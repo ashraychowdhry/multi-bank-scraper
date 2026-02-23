@@ -1,5 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawn } from "node:child_process";
 import { loadConfig } from "./config.js";
 import {
   launchBrowser,
@@ -9,6 +11,9 @@ import {
   scrapeTransactions,
 } from "./scraper.js";
 import { ScrapeResult } from "./types.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(__dirname, "..");
 
 async function main() {
   console.log("=== Chase Bank Scraper ===\n");
@@ -58,11 +63,33 @@ async function main() {
     console.log(`\n${transactions.length} transaction(s) scraped.`);
 
     await saveSession(context, config);
+
+    // Copy data for web dashboard
+    const webPublicDir = path.join(projectRoot, "web", "public");
+    if (!fs.existsSync(webPublicDir)) {
+      fs.mkdirSync(webPublicDir, { recursive: true });
+    }
+    fs.copyFileSync(outputFile, path.join(webPublicDir, "data.json"));
   } catch (err) {
     console.error("Scraper error:", err);
     process.exit(1);
   } finally {
     await browser.close();
+  }
+
+  // Launch dashboard
+  if (process.env.NO_DASHBOARD !== "true") {
+    console.log("\nLaunching dashboard at http://localhost:5173 ...\n");
+    const vite = spawn("npx", ["vite", "--config", "web/vite.config.ts"], {
+      cwd: projectRoot,
+      stdio: "inherit",
+    });
+    vite.on("error", (err) => console.error("Failed to launch dashboard:", err));
+
+    process.on("SIGINT", () => {
+      vite.kill();
+      process.exit(0);
+    });
   }
 }
 
