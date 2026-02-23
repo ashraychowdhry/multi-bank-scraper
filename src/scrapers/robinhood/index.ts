@@ -2,7 +2,7 @@ import type { Scraper, ScraperConfig } from "../interface.js";
 import type { ScraperResult } from "../../types.js";
 import { launchBrowser, saveSession } from "../browser.js";
 import { login } from "./login.js";
-import { scrapeAccounts } from "./accounts.js";
+import { scrapeAccounts, scrapeCash } from "./accounts.js";
 import { scrapeHoldings } from "./holdings.js";
 
 export class RobinhoodScraper implements Scraper {
@@ -27,6 +27,9 @@ export class RobinhoodScraper implements Scraper {
 
       const accounts = await scrapeAccounts(page);
       const holdings = await scrapeHoldings(page);
+      // Page is now on /account/investing — scrape cash from same page
+      const cash = await scrapeCash(page);
+      if (cash) accounts.push(cash);
       await saveSession(context, config.authStatePath);
 
       return {

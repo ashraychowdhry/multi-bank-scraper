@@ -52,3 +52,36 @@ export async function scrapeAccounts(
 
   return accounts;
 }
+
+/**
+ * Scrape cash balance from the /account/investing page.
+ * Call this AFTER scrapeHoldings, since the page is already navigated there.
+ * Table text: "Individual Cash$31,260.16Withdrawable Cash$31,260.16"
+ */
+export async function scrapeCash(
+  page: Page
+): Promise<RobinhoodAccountData | null> {
+  try {
+    const tables = await page.$$eval("table", (els) =>
+      els.map((el) => el.textContent?.trim() || "")
+    );
+    const cashTable = tables.find((t) => t.includes("Individual Cash"));
+    if (!cashTable) return null;
+
+    const match = cashTable.match(/Individual Cash\$([\d,]+\.\d{2})/);
+    if (!match) return null;
+
+    const cashBalance = parseBalance(`$${match[1]}`);
+    console.log(`[robinhood] Cash balance: $${cashBalance.toLocaleString()}`);
+
+    return {
+      name: "Robinhood Cash",
+      type: "checking",
+      currentBalance: cashBalance,
+      accountNumber: "RH-CASH",
+    };
+  } catch (e) {
+    console.warn("[robinhood] Could not scrape cash balance:", e);
+    return null;
+  }
+}
