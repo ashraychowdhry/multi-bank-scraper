@@ -31,7 +31,9 @@
       "Bash(SCRAPERS=chase HEADLESS=false NO_DASHBOARD=true npm run:*)",
       "Bash(SCRAPERS=robinhood HEADLESS=false NO_DASHBOARD=true npm run:*)",
       "Bash(SCRAPERS=fidelity HEADLESS=false NO_DASHBOARD=true npm run:*)",
-      "Bash(SCRAPERS=chase,robinhood,fidelity HEADLESS=false NO_DASHBOARD=true npm run:*)"
+      "Bash(SCRAPERS=chase,robinhood,fidelity HEADLESS=false NO_DASHBOARD=true npm run:*)",
+      "Bash(SCRAPERS=chase,robinhood,amex npm run:*)",
+      "Bash(SCRAPERS=chase,robinhood,fidelity,amex npm run:*)"
     ]
   }
 }

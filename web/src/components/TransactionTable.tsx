@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import type { Transaction } from "@shared/types";
 import { formatCurrency, formatDate, formatMonthLabel } from "../utils/format";
+import { classifyTransaction } from "../utils/classifyTransaction";
 import { Filters } from "./Filters";
 
 type SortKey = "date" | "description" | "amount";
@@ -57,6 +58,23 @@ export function TransactionTable({ transactions }: { transactions: Transaction[]
     return txns;
   }, [transactions, search, accountFilter, monthFilter, institutionFilter, sortKey, sortDir]);
 
+  // Summary stats for filtered transactions
+  const totalIn = filtered.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+  const totalOut = filtered.filter((t) => t.amount < 0).reduce((s, t) => s + t.amount, 0);
+  const netAmount = totalIn + totalOut;
+
+  // Category breakdown
+  const categoryBreakdown = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const t of filtered) {
+      const cat = classifyTransaction(t);
+      counts[cat] = (counts[cat] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+  }, [filtered]);
+
   const visible = filtered.slice(0, showCount);
 
   function handleSort(key: SortKey) {
@@ -79,6 +97,39 @@ export function TransactionTable({ transactions }: { transactions: Transaction[]
 
   return (
     <div className="transaction-table">
+      {/* Summary Stats */}
+      <div className="txn-summary-row">
+        <div className="txn-summary-stat">
+          <span className="txn-summary-label">Money In</span>
+          <span className="txn-summary-value positive">{formatCurrency(totalIn)}</span>
+        </div>
+        <div className="txn-summary-stat">
+          <span className="txn-summary-label">Money Out</span>
+          <span className="txn-summary-value negative">{formatCurrency(Math.abs(totalOut))}</span>
+        </div>
+        <div className="txn-summary-stat">
+          <span className="txn-summary-label">Net</span>
+          <span className={`txn-summary-value ${netAmount >= 0 ? "positive" : "negative"}`}>
+            {netAmount >= 0 ? "+" : ""}{formatCurrency(netAmount)}
+          </span>
+        </div>
+        <div className="txn-summary-stat">
+          <span className="txn-summary-label">Count</span>
+          <span className="txn-summary-value">{filtered.length}</span>
+        </div>
+      </div>
+
+      {/* Category Breakdown Pills */}
+      {categoryBreakdown.length > 0 && (
+        <div className="txn-category-pills">
+          {categoryBreakdown.map(([cat, count]) => (
+            <span key={cat} className="txn-category-pill">
+              {cat} <span className="txn-category-count">{count}</span>
+            </span>
+          ))}
+        </div>
+      )}
+
       <Filters
         search={search}
         onSearchChange={(v) => { setSearch(v); resetFilters(); }}

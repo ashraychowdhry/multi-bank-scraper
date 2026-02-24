@@ -1,22 +1,30 @@
 import { useState, useMemo } from "react";
 import { useData } from "./hooks/useData";
 import { formatDate } from "./utils/format";
-import { isTrade } from "./utils/classifyTransaction";
+import { creditAccounts } from "./utils/accountHelpers";
 import { Dashboard } from "./components/Dashboard";
+import { Banking } from "./components/Banking";
 import { TransactionTable } from "./components/TransactionTable";
-import { HoldingsTable } from "./components/HoldingsTable";
-import { TradingActivity } from "./components/TradingActivity";
+import { HoldingsTab } from "./components/HoldingsTab";
+import { Credit } from "./components/Credit";
+import { Coupons } from "./components/Coupons";
 
-type Tab = "overview" | "transactions" | "holdings" | "trading";
+type Tab = "overview" | "banking" | "transactions" | "holdings" | "credit" | "coupons";
 
 export default function App() {
   const { data, loading, error } = useData();
   const [tab, setTab] = useState<Tab>("overview");
 
-  const tradeCount = useMemo(
-    () => (data?.transactions || []).filter(isTrade).length,
-    [data]
-  );
+  const counts = useMemo(() => {
+    if (!data) return { banking: 0, transactions: 0, holdings: 0, credit: 0, coupons: 0 };
+    return {
+      banking: data.accounts.filter((a) => a.type === "checking" || a.type === "savings").length,
+      transactions: data.transactions.length,
+      holdings: data.holdings.length,
+      credit: creditAccounts(data.accounts).length,
+      coupons: (data.offers?.length || 0) + (data.amexOffers?.length || 0),
+    };
+  }, [data]);
 
   if (loading) {
     return <div className="app"><div className="loading">Loading data...</div></div>;
@@ -32,10 +40,6 @@ export default function App() {
     );
   }
 
-  const hasHoldings = data.holdings && data.holdings.length > 0;
-  const hasTransactions = data.transactions && data.transactions.length > 0;
-  const hasTrades = tradeCount > 0;
-
   return (
     <div className="app">
       <header className="app-header">
@@ -49,36 +53,54 @@ export default function App() {
         >
           Overview
         </button>
-        {hasTransactions && (
+        {counts.banking > 0 && (
+          <button
+            onClick={() => setTab("banking")}
+            className={tab === "banking" ? "active" : ""}
+          >
+            Banking
+          </button>
+        )}
+        {counts.transactions > 0 && (
           <button
             onClick={() => setTab("transactions")}
             className={tab === "transactions" ? "active" : ""}
           >
-            Transactions ({data.transactions.length})
+            Transactions ({counts.transactions})
           </button>
         )}
-        {hasTrades && (
-          <button
-            onClick={() => setTab("trading")}
-            className={tab === "trading" ? "active" : ""}
-          >
-            Trading ({tradeCount})
-          </button>
-        )}
-        {hasHoldings && (
+        {counts.holdings > 0 && (
           <button
             onClick={() => setTab("holdings")}
             className={tab === "holdings" ? "active" : ""}
           >
-            Holdings ({data.holdings.length})
+            Holdings ({counts.holdings})
+          </button>
+        )}
+        {counts.credit > 0 && (
+          <button
+            onClick={() => setTab("credit")}
+            className={tab === "credit" ? "active" : ""}
+          >
+            Credit
+          </button>
+        )}
+        {counts.coupons > 0 && (
+          <button
+            onClick={() => setTab("coupons")}
+            className={tab === "coupons" ? "active" : ""}
+          >
+            Coupons ({counts.coupons})
           </button>
         )}
       </nav>
       <main>
         {tab === "overview" && <Dashboard data={data} />}
+        {tab === "banking" && <Banking data={data} />}
         {tab === "transactions" && <TransactionTable transactions={data.transactions} />}
-        {tab === "trading" && <TradingActivity transactions={data.transactions} />}
-        {tab === "holdings" && hasHoldings && <HoldingsTable holdings={data.holdings} />}
+        {tab === "holdings" && <HoldingsTab data={data} />}
+        {tab === "credit" && <Credit data={data} />}
+        {tab === "coupons" && <Coupons data={data} />}
       </main>
     </div>
   );

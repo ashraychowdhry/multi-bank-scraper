@@ -464,17 +464,28 @@ export async function withPopupRetry<T>(
 /**
  * Proactive popup sweep after page navigation.
  * Call this after page.goto() to catch popups that appear on page load.
+ * Loops up to maxSweeps times to catch stacked/sequential popups.
  */
 export async function afterNavigation(
   page: Page,
-  options: DismissPopupOptions = {}
+  options: DismissPopupOptions & { maxSweeps?: number } = {}
 ): Promise<void> {
+  const maxSweeps = options.maxSweeps ?? 3;
+  const name = options.scraperName || "popup-guard";
+
   await page.waitForTimeout(1000);
-  const result = await dismissPopups(page, options);
-  if (result.dismissed) {
-    log(
-      options.scraperName || "popup-guard",
-      `Auto-dismissed popup after navigation (${result.method}${result.description ? `: ${result.description}` : ""})`
-    );
+
+  for (let i = 0; i < maxSweeps; i++) {
+    const result = await dismissPopups(page, options);
+    if (result.dismissed) {
+      log(
+        name,
+        `Auto-dismissed popup after navigation (${result.method}${result.description ? `: ${result.description}` : ""})`
+      );
+      // Brief pause for next popup to render before sweeping again
+      await page.waitForTimeout(800);
+    } else {
+      break;
+    }
   }
 }

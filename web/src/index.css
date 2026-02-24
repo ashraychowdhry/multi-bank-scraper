@@ -166,6 +166,7 @@ body {
 
 .breakdown-dot.banking { background: var(--checking); }
 .breakdown-dot.investment { background: var(--brokerage); }
+.breakdown-dot.debt { background: var(--credit); }
 .breakdown-dot.gain { background: var(--positive); }
 .breakdown-dot.loss { background: var(--negative); }
 
@@ -1355,6 +1356,489 @@ tfoot .totals-row td {
   color: var(--text-muted);
 }
 
+/* ========================= */
+/* Transaction Summary Stats */
+/* ========================= */
+.txn-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.txn-summary-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.txn-summary-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.txn-summary-value {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.txn-summary-value.positive { color: var(--positive); }
+.txn-summary-value.negative { color: var(--negative); }
+
+/* Category Breakdown Pills */
+.txn-category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.txn-category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.txn-category-count {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+/* ========================= */
+/* Banking Tab               */
+/* ========================= */
+.banking-tab {
+  width: 100%;
+}
+
+.banking-banner {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 28px;
+}
+
+.banking-banner-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.banking-banner-label {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.banking-banner-value {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+
+.banking-banner-stats {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.banking-flow-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.banking-flow-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.banking-flow-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.banking-flow-value.positive { color: var(--positive); }
+.banking-flow-value.negative { color: var(--negative); }
+
+.banking-interest-section {
+  margin-bottom: 28px;
+}
+
+.banking-recent {
+  margin-bottom: 28px;
+}
+
+.banking-recent .section-title {
+  margin-bottom: 16px;
+}
+
+/* ========================= */
+/* Credit Tab                */
+/* ========================= */
+.credit-tab {
+  width: 100%;
+}
+
+.credit-banner {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 28px;
+}
+
+.credit-banner-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.credit-banner-label {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.credit-banner-value {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+
+.credit-banner-value.negative { color: var(--negative); }
+
+.credit-utilization {
+  margin-bottom: 20px;
+}
+
+.utilization-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.utilization-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.utilization-pct {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--positive);
+}
+
+.utilization-pct.warning {
+  color: var(--negative);
+}
+
+.utilization-bar-track {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.utilization-bar-fill {
+  height: 100%;
+  background: var(--positive);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.utilization-bar-fill.warning {
+  background: var(--negative);
+}
+
+.utilization-detail {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.credit-banner-stats {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.credit-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.credit-stat-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.credit-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.credit-stat-value.negative { color: var(--negative); }
+
+.credit-details-section {
+  margin-bottom: 28px;
+}
+
+.credit-recent {
+  margin-bottom: 28px;
+}
+
+.credit-recent .section-title {
+  margin-bottom: 16px;
+}
+
+/* ========================= */
+/* Holdings Tab              */
+/* ========================= */
+.holdings-tab {
+  width: 100%;
+}
+
+.allocation-section {
+  margin-bottom: 28px;
+}
+
+.allocation-section .section-title {
+  margin-bottom: 16px;
+}
+
+.allocation-bar-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+
+.allocation-bar-full {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.allocation-bar-segment {
+  transition: width 0.3s ease;
+}
+
+.allocation-bar-segment.stocks {
+  background: var(--accent);
+}
+
+.allocation-bar-segment.crypto {
+  background: #f59e0b;
+}
+
+.allocation-legend {
+  display: flex;
+  gap: 24px;
+}
+
+.allocation-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.allocation-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.allocation-legend-dot.stocks {
+  background: var(--accent);
+}
+
+.allocation-legend-dot.crypto {
+  background: #f59e0b;
+}
+
+/* ========================= */
+/* Coupons Tab               */
+/* ========================= */
+.coupons-tab {
+  width: 100%;
+}
+
+.coupons-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 60px 20px;
+  font-size: 16px;
+}
+
+.coupons-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.coupons-controls .filter-search {
+  flex: 1;
+  min-width: 200px;
+}
+
+.coupons-filter-pills {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.coupon-filter-pill {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.coupon-filter-pill:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.coupon-filter-pill.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.coupons-info {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.coupons-section {
+  margin-bottom: 28px;
+}
+
+.coupons-section .section-title {
+  margin-bottom: 16px;
+}
+
+.coupons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.coupon-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  transition: border-color 0.15s;
+}
+
+.coupon-card:hover {
+  border-color: var(--accent);
+}
+
+.coupon-card.activated {
+  opacity: 0.75;
+}
+
+.coupon-card.expiring {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.coupon-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.coupon-merchant {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.coupon-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.coupon-status.added {
+  color: var(--positive);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.coupon-status.available {
+  color: var(--accent);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.coupon-status.expiring {
+  color: var(--negative);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.coupon-reward {
+  font-size: 13px;
+  color: var(--positive);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.coupon-expiry {
+  font-size: 12px;
+  color: var(--negative);
+  margin-bottom: 4px;
+}
+
+.coupon-amount {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.coupon-source {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 /* =================== */
 /* Responsive          */
 /* =================== */
@@ -1367,6 +1851,14 @@ tfoot .totals-row td {
   .top-movers {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .txn-summary-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .coupons-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1432,5 +1924,28 @@ tfoot .totals-row td {
 
   .allocation-row {
     grid-template-columns: 80px 1fr 100px;
+  }
+
+  .banking-banner-value,
+  .credit-banner-value {
+    font-size: 32px;
+  }
+
+  .banking-banner-stats,
+  .credit-banner-stats {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .coupons-controls {
+    flex-direction: column;
+  }
+
+  .coupons-controls .filter-search {
+    min-width: unset;
+  }
+
+  .txn-summary-row {
+    grid-template-columns: 1fr 1fr;
   }
 }
