@@ -75,10 +75,16 @@ async function handle2FA(page: Page): Promise<boolean> {
   const deadline = Date.now() + 180_000;
   while (Date.now() < deadline) {
     await page.waitForTimeout(2000);
-    if (page.url().includes("dashboard") || page.url().includes("/account")) {
+    const url = page.url();
+    // Wait for actual dashboard — exclude intercept/security gate pages
+    if (url.includes("dashboard") && !url.includes("intercept")) {
       console.log("[chase] 2FA completed — dashboard detected.");
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(3000);
       return true;
+    }
+    // Handle security intercept page — user may need to interact with it
+    if (url.includes("intercept")) {
+      console.log("[chase] Security intercept page detected. Complete it in the browser...");
     }
   }
 

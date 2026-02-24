@@ -1,4 +1,4 @@
-import type { ScrapeResult, Account, Holding, CashInterest, StockLendingIncome } from "@shared/types";
+import type { ScrapeResult, Account, Holding, CashInterest, StockLendingIncome, ChaseOffer } from "@shared/types";
 import { formatCurrency } from "../utils/format";
 import { aggregateHoldings, type AggregatedHolding } from "../utils/aggregateHoldings";
 import { AccountCard } from "./AccountCard";
@@ -147,6 +147,73 @@ function TopMovers({ holdings }: { holdings: Holding[] }) {
   );
 }
 
+function OffersCard({ offers }: { offers: ChaseOffer[] }) {
+  const expiringOffers = offers.filter((o) => o.isExpiringSoon && !o.isActivated);
+  const activatedOffers = offers.filter((o) => o.isActivated);
+  const availableOffers = offers.filter((o) => !o.isExpiringSoon && !o.isActivated);
+  const accountName = offers[0]?.accountName || "";
+
+  return (
+    <div className="offers-card">
+      <div className="offers-header">
+        <h3>Chase Offers</h3>
+        <span className="offers-count">{offers.length} deals</span>
+      </div>
+      {accountName && (
+        <span className="offers-account">{accountName}</span>
+      )}
+      {expiringOffers.length > 0 && (
+        <div className="offers-section">
+          <h4 className="offers-section-title expiring">
+            Expiring Soon ({expiringOffers.length})
+          </h4>
+          <div className="offers-list">
+            {expiringOffers.map((o) => (
+              <div key={o.merchant} className="offer-row">
+                <span className="offer-merchant">{o.merchant}</span>
+                <span className="offer-reward">{o.reward}</span>
+                {o.daysLeft && (
+                  <span className="offer-days-left">{o.daysLeft}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {activatedOffers.length > 0 && (
+        <div className="offers-section">
+          <h4 className="offers-section-title activated">
+            Added to Card ({activatedOffers.length})
+          </h4>
+          <div className="offers-list">
+            {activatedOffers.map((o) => (
+              <div key={o.merchant} className="offer-row activated">
+                <span className="offer-merchant">{o.merchant}</span>
+                <span className="offer-reward">{o.reward}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {availableOffers.length > 0 && (
+        <div className="offers-section">
+          <h4 className="offers-section-title">
+            Available ({availableOffers.length})
+          </h4>
+          <div className="offers-list">
+            {availableOffers.map((o) => (
+              <div key={o.merchant} className="offer-row">
+                <span className="offer-merchant">{o.merchant}</span>
+                <span className="offer-reward">{o.reward}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Dashboard({ data }: { data: ScrapeResult }) {
   const totalBalance = data.accounts.reduce((s, a) => s + a.currentBalance, 0);
   const totalHoldingsValue = data.holdings.reduce((s, h) => s + h.currentValue, 0);
@@ -267,6 +334,11 @@ export function Dashboard({ data }: { data: ScrapeResult }) {
           {data.cashInterest && <CashInterestCard data={data.cashInterest} />}
           {data.stockLending && <StockLendingCard data={data.stockLending} />}
         </div>
+      )}
+
+      {/* Chase Offers */}
+      {data.offers && data.offers.length > 0 && (
+        <OffersCard offers={data.offers} />
       )}
 
       {/* Portfolio Allocation + Top Movers */}
