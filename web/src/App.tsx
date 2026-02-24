@@ -1,15 +1,22 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useData } from "./hooks/useData";
 import { formatDate } from "./utils/format";
+import { isTrade } from "./utils/classifyTransaction";
 import { Dashboard } from "./components/Dashboard";
 import { TransactionTable } from "./components/TransactionTable";
 import { HoldingsTable } from "./components/HoldingsTable";
+import { TradingActivity } from "./components/TradingActivity";
 
-type Tab = "overview" | "transactions" | "holdings";
+type Tab = "overview" | "transactions" | "holdings" | "trading";
 
 export default function App() {
   const { data, loading, error } = useData();
   const [tab, setTab] = useState<Tab>("overview");
+
+  const tradeCount = useMemo(
+    () => (data?.transactions || []).filter(isTrade).length,
+    [data]
+  );
 
   if (loading) {
     return <div className="app"><div className="loading">Loading data...</div></div>;
@@ -27,6 +34,7 @@ export default function App() {
 
   const hasHoldings = data.holdings && data.holdings.length > 0;
   const hasTransactions = data.transactions && data.transactions.length > 0;
+  const hasTrades = tradeCount > 0;
 
   return (
     <div className="app">
@@ -49,6 +57,14 @@ export default function App() {
             Transactions ({data.transactions.length})
           </button>
         )}
+        {hasTrades && (
+          <button
+            onClick={() => setTab("trading")}
+            className={tab === "trading" ? "active" : ""}
+          >
+            Trading ({tradeCount})
+          </button>
+        )}
         {hasHoldings && (
           <button
             onClick={() => setTab("holdings")}
@@ -61,6 +77,7 @@ export default function App() {
       <main>
         {tab === "overview" && <Dashboard data={data} />}
         {tab === "transactions" && <TransactionTable transactions={data.transactions} />}
+        {tab === "trading" && <TradingActivity transactions={data.transactions} />}
         {tab === "holdings" && hasHoldings && <HoldingsTable holdings={data.holdings} />}
       </main>
     </div>

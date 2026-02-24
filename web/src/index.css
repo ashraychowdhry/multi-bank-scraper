@@ -1033,6 +1033,113 @@ tfoot .totals-row td {
 }
 
 /* =================== */
+/* Trading Activity    */
+/* =================== */
+.trading-activity {
+  width: 100%;
+}
+
+.trade-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.trade-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.trade-type-filter {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.trade-type-filter button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.trade-type-filter button:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.trade-type-filter button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.trade-filters-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.trade-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+
+.trade-badge.buy {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.trade-badge.sell {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.trade-sub-row {
+  background: var(--surface);
+}
+
+.trade-sub-row td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(42, 46, 58, 0.5);
+}
+
+.trade-sub-row .sub-ticker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trade-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.trade-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* =================== */
 /* Responsive          */
 /* =================== */
 @media (max-width: 900px) {

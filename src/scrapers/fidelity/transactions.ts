@@ -2,6 +2,20 @@ import type { Page } from "playwright";
 import type { Transaction } from "../../types.js";
 import { parseBalance } from "../utils.js";
 
+function classifyFidelityTransaction(description: string): string | undefined {
+  const d = description.toLowerCase();
+  if (d.includes("you bought") || d.includes("bought")) return "buy";
+  if (d.includes("you sold") || d.includes("sold")) return "sell";
+  if (d.includes("dividend")) return "dividend";
+  if (d.includes("reinvestment")) return "reinvestment";
+  if (d.includes("contribution")) return "contribution";
+  if (d.includes("deposit")) return "deposit";
+  if (d.includes("withdrawal")) return "withdrawal";
+  if (d.includes("interest")) return "interest";
+  if (d.includes("fee")) return "fee";
+  return undefined;
+}
+
 const ACTIVITY_URL =
   "https://digital.fidelity.com/ftgw/digital/portfolio/activity";
 
@@ -158,11 +172,12 @@ async function scrapeHistoryRows(
     };
     const isoDate = `${parts[2]}-${months[parts[0]] || "01"}-${parts[1].padStart(2, "0")}`;
 
+    const description = r.description || "Unknown";
     return {
       date: isoDate,
-      description: r.description || "Unknown",
+      description,
       amount: parseBalance(r.amount),
-      category: undefined,
+      category: classifyFidelityTransaction(description),
       isPending: false,
       accountName: r.account,
     };
