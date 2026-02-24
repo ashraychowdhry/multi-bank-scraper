@@ -1,6 +1,7 @@
 import type { Page } from "playwright";
 import type { StockLendingIncome } from "../../types.js";
 import { parseBalance } from "../utils.js";
+import { afterNavigation } from "../popup-guard.js";
 
 /**
  * Scrape stock lending income from /account/stock-lending.
@@ -18,7 +19,8 @@ export async function scrapeStockLending(
       waitUntil: "domcontentloaded",
       timeout: 20000,
     });
-    await page.waitForTimeout(4000);
+    await afterNavigation(page, { scraperName: "robinhood" });
+    await page.waitForTimeout(3000);
 
     // Extract the two h2 dollar amounts — first is "last month", second is "total"
     const dollarH2s = await page.$$eval("h2", (els) =>

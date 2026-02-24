@@ -1,6 +1,7 @@
 import type { Page } from "playwright";
 import type { AccountType, AmexCreditCardDetails } from "../../types.js";
 import { parseBalance } from "../utils.js";
+import { afterNavigation } from "../popup-guard.js";
 import { DASHBOARD_URL } from "./login.js";
 
 // Internal type without institution field — added by AmexScraper.scrape()
@@ -24,7 +25,8 @@ export async function scrapeAccounts(page: Page): Promise<{
       timeout: 20000,
     });
   }
-  await page.waitForTimeout(5000);
+  await afterNavigation(page, { scraperName: "amex" });
+  await page.waitForTimeout(4000);
 
   const accounts: AmexAccountData[] = [];
   let cardDetails: AmexCreditCardDetails | null = null;

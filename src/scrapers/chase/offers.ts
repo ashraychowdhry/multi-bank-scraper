@@ -1,5 +1,6 @@
 import type { Page } from "playwright";
 import type { ChaseOffer } from "../../types.js";
+import { afterNavigation } from "../popup-guard.js";
 
 type OfferData = Omit<ChaseOffer, "institution">;
 
@@ -42,6 +43,7 @@ export async function scrapeOffers(page: Page): Promise<OfferData[]> {
       waitUntil: "domcontentloaded",
       timeout: 20000,
     });
+    await afterNavigation(page, { scraperName: "chase" });
 
     // Wait for commerce tiles to render (SPA page needs time)
     try {

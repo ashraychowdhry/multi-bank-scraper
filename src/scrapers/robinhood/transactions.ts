@@ -1,6 +1,7 @@
 import type { Page } from "playwright";
 import type { Transaction } from "../../types.js";
 import { normalizeDate } from "../utils.js";
+import { afterNavigation } from "../popup-guard.js";
 
 // Internal type without institution field (added by RobinhoodScraper.scrape)
 export type RobinhoodTransactionData = Omit<Transaction, "institution">;
@@ -69,7 +70,8 @@ export async function scrapeTransactions(
     waitUntil: "domcontentloaded",
     timeout: 20000,
   });
-  await page.waitForTimeout(5000);
+  await afterNavigation(page, { scraperName: "robinhood" });
+  await page.waitForTimeout(4000);
 
   // Scroll to load more entries
   let previousCount = 0;

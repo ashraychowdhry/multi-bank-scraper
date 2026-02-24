@@ -1,5 +1,6 @@
 import type { Page } from "playwright";
 import type { AmexOffer } from "../../types.js";
+import { afterNavigation } from "../popup-guard.js";
 
 const OFFERS_URL = "https://global.americanexpress.com/offers/eligible";
 
@@ -15,7 +16,8 @@ export async function scrapeOffers(page: Page): Promise<AmexOffer[]> {
       waitUntil: "domcontentloaded",
       timeout: 20000,
     });
-    await page.waitForTimeout(5000);
+    await afterNavigation(page, { scraperName: "amex" });
+    await page.waitForTimeout(4000);
 
     // Wait for the offers list to appear
     const offersLoaded = await page

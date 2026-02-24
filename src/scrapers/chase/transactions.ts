@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import type { Page } from "playwright";
 import type { Transaction } from "../../types.js";
 import { parseBalance, normalizeDate } from "../utils.js";
+import { afterNavigation, withPopupRetry } from "../popup-guard.js";
 import { DASHBOARD_URL } from "./login.js";
 import type { ChaseAccountData } from "./accounts.js";
 import { parseChaseCSV } from "./csv.js";
@@ -38,11 +39,11 @@ export async function scrapeTransactions(
         .catch(() => {});
       console.log(`  Navigated to: ${page.url()}`);
 
-      await page
-        .waitForSelector('tr[id*="ACTIVITY-dataTableId-row-"]', {
-          timeout: 15000,
-        })
-        .catch(() => console.log("  Transaction table not found."));
+      await withPopupRetry(
+        page,
+        () => page.waitForSelector('tr[id*="ACTIVITY-dataTableId-row-"]', { timeout: 15000 }),
+        { scraperName: "chase", maxRetries: 1 }
+      ).catch(() => console.log("  Transaction table not found."));
       await page.waitForTimeout(2000);
 
       // Try CSV download first (most complete data)
@@ -62,6 +63,7 @@ export async function scrapeTransactions(
 
     // Always return to dashboard for next account
     await page.goto(DASHBOARD_URL, { waitUntil: "domcontentloaded" });
+    await afterNavigation(page, { scraperName: "chase" });
     await page.waitForSelector('[data-testid="accountTile"]', { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(1500);
   }

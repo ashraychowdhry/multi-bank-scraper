@@ -1,5 +1,6 @@
 import type { Page } from "playwright";
 import type { Holding } from "../../types.js";
+import { afterNavigation } from "../popup-guard.js";
 
 // Internal type without institution field (added by RobinhoodScraper.scrape)
 export type RobinhoodHoldingData = Omit<Holding, "institution">;
@@ -60,7 +61,8 @@ export async function scrapeHoldings(
     waitUntil: "domcontentloaded",
     timeout: 20000,
   });
-  await page.waitForTimeout(5000);
+  await afterNavigation(page, { scraperName: "robinhood" });
+  await page.waitForTimeout(4000);
 
   // Collect all holding links: /stocks/TICKER or /crypto/TICKER
   const holdingLinks = await page.$$eval(

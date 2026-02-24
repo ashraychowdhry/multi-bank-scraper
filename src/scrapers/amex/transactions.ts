@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import type { Page } from "playwright";
 import type { Transaction } from "../../types.js";
 import { parseBalance, normalizeDate } from "../utils.js";
+import { afterNavigation } from "../popup-guard.js";
 import { parseAmexCSV } from "./csv.js";
 
 const ACTIVITY_URL = "https://global.americanexpress.com/activity/recent";
@@ -16,20 +17,8 @@ export async function scrapeTransactions(
     waitUntil: "domcontentloaded",
     timeout: 20000,
   });
-  await page.waitForTimeout(5000);
-
-  // Dismiss onboarding modal if present
-  try {
-    const exploreBtn = page.locator(
-      '[data-testid="myca-activity-onboarding-modal/explore-on-my-own"]'
-    );
-    if (await exploreBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await exploreBtn.click();
-      await page.waitForTimeout(1000);
-    }
-  } catch {
-    // Not critical
-  }
+  await afterNavigation(page, { scraperName: "amex" });
+  await page.waitForTimeout(4000);
 
   // Try CSV download first (most complete data, includes categories)
   const csvTransactions = await downloadTransactionsCSV(page, accountName);

@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import type { Page } from "playwright";
 import type { Holding } from "../../types.js";
+import { afterNavigation } from "../popup-guard.js";
 import { parseFidelityPositionsCSV, type FidelityCSVPosition } from "./csv.js";
 
 // Internal type: Holding + account info for account aggregation
@@ -21,18 +22,8 @@ export async function scrapeHoldings(
     waitUntil: "domcontentloaded",
     timeout: 20000,
   });
-  await page.waitForTimeout(5000);
-
-  // Close any modal/banner overlay (e.g., "Check out our new custom columns")
-  try {
-    const closeBtn = page
-      .locator('button[aria-label="Close"], button:has-text("close")')
-      .first();
-    if (await closeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await closeBtn.click();
-      await page.waitForTimeout(500);
-    }
-  } catch {}
+  await page.waitForTimeout(3000);
+  await afterNavigation(page, { scraperName: "fidelity" });
 
   const csvContent = await downloadPositionsCSV(page);
   if (!csvContent) {

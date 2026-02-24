@@ -1,6 +1,7 @@
 import type { Page } from "playwright";
 import type { Transaction } from "../../types.js";
 import { parseBalance } from "../utils.js";
+import { afterNavigation } from "../popup-guard.js";
 
 function classifyFidelityTransaction(description: string): string | undefined {
   const d = description.toLowerCase();
@@ -32,7 +33,8 @@ export async function scrapeTransactions(
     waitUntil: "domcontentloaded",
     timeout: 20000,
   });
-  await page.waitForTimeout(5000);
+  await afterNavigation(page, { scraperName: "fidelity" });
+  await page.waitForTimeout(4000);
 
   // Click "History" filter button to show historical transactions
   const historyBtn = page.locator('button:has-text("History")').first();

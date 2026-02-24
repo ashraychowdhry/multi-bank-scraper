@@ -1,6 +1,7 @@
 import type { Page } from "playwright";
 import type { AccountType } from "../../types.js";
 import { parseBalance } from "../utils.js";
+import { afterNavigation } from "../popup-guard.js";
 import { DASHBOARD_URL } from "./login.js";
 
 // Internal type without institution field (added by ChaseScraper.scrape)
@@ -18,6 +19,7 @@ export async function scrapeAccounts(page: Page): Promise<ChaseAccountData[]> {
     await page.goto(DASHBOARD_URL, { waitUntil: "domcontentloaded", timeout: 20000 });
   }
 
+  await afterNavigation(page, { scraperName: "chase" });
   await page.waitForSelector('[data-testid="accountTile"]', {
     timeout: 15000,
   });
