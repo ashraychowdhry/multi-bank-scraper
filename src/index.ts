@@ -26,6 +26,8 @@ async function main() {
   let cashInterest: ScrapeResult["cashInterest"];
   let stockLending: ScrapeResult["stockLending"];
   let allOffers: ScrapeResult["offers"];
+  let amexOffers: ScrapeResult["amexOffers"];
+  let amexCardDetails: ScrapeResult["amexCardDetails"];
 
   for (const name of enabledScrapers) {
     const factory = scraperRegistry[name];
@@ -49,6 +51,8 @@ async function main() {
         allOffers = allOffers || [];
         allOffers.push(...result.offers);
       }
+      if (result.amexOffers) amexOffers = result.amexOffers;
+      if (result.amexCardDetails) amexCardDetails = result.amexCardDetails;
       console.log(
         `\n${scraper.displayName}: ${result.accounts.length} account(s), ` +
           `${result.transactions.length} transaction(s), ` +
@@ -69,6 +73,8 @@ async function main() {
   if (cashInterest) combined.cashInterest = cashInterest;
   if (stockLending) combined.stockLending = stockLending;
   if (allOffers) combined.offers = allOffers;
+  if (amexOffers) combined.amexOffers = amexOffers;
+  if (amexCardDetails) combined.amexCardDetails = amexCardDetails;
 
   const outputFile = path.join(
     globalConfig.outputDir,

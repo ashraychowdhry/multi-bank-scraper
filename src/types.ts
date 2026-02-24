@@ -61,6 +61,26 @@ export interface ChaseOffer {
   institution: string;
 }
 
+export interface AmexOffer {
+  merchant: string;
+  description: string;
+  expiresAt?: string;
+  isAdded: boolean;
+  rewardType: "credit" | "points";
+  rewardAmount?: string;
+}
+
+export interface AmexCreditCardDetails {
+  statementBalance: number;
+  totalBalance: number;
+  minimumPayment: number;
+  paymentDueDate: string; // YYYY-MM-DD
+  creditLimit: number;
+  availableCredit: number;
+  lastPaymentAmount?: number;
+  lastPaymentDate?: string; // YYYY-MM-DD
+}
+
 export interface ScraperResult {
   institution: string;
   accounts: Account[];
@@ -69,6 +89,8 @@ export interface ScraperResult {
   cashInterest?: CashInterest;
   stockLending?: StockLendingIncome;
   offers?: ChaseOffer[];
+  amexOffers?: AmexOffer[];
+  amexCardDetails?: AmexCreditCardDetails;
 }
 
 export interface ScrapeResult {
@@ -79,4 +101,6 @@ export interface ScrapeResult {
   cashInterest?: CashInterest;
   stockLending?: StockLendingIncome;
   offers?: ChaseOffer[];
+  amexOffers?: AmexOffer[];
+  amexCardDetails?: AmexCreditCardDetails;
 }
