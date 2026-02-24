@@ -50,6 +50,16 @@ export interface StockLendingIncome {
   stocksOnLoan: { ticker: string; name: string; shares: number }[];
 }
 
+export interface ChaseOffer {
+  merchant: string;
+  reward: string; // e.g. "10% cash back", "Up to 15% back", "$100 cash back"
+  isExpiringSoon: boolean;
+  daysLeft?: string; // e.g. "5d left"
+  isActivated: boolean; // already added to card
+  accountName: string; // which card/account the offer is linked to
+  institution: string;
+}
+
 export interface ScraperResult {
   institution: string;
   accounts: Account[];
@@ -57,6 +67,7 @@ export interface ScraperResult {
   holdings: Holding[];
   cashInterest?: CashInterest;
   stockLending?: StockLendingIncome;
+  offers?: ChaseOffer[];
 }
 
 export interface ScrapeResult {
@@ -66,4 +77,5 @@ export interface ScrapeResult {
   holdings: Holding[];
   cashInterest?: CashInterest;
   stockLending?: StockLendingIncome;
+  offers?: ChaseOffer[];
 }

@@ -4,6 +4,7 @@ import { launchBrowser, saveSession } from "../browser.js";
 import { login } from "./login.js";
 import { scrapeAccounts } from "./accounts.js";
 import { scrapeTransactions } from "./transactions.js";
+import { scrapeOffers } from "./offers.js";
 
 export class ChaseScraper implements Scraper {
   readonly name = "chase";
@@ -25,6 +26,15 @@ export class ChaseScraper implements Scraper {
 
       const accounts = await scrapeAccounts(page);
       const transactions = await scrapeTransactions(page, accounts);
+
+      // Navigate back to dashboard for offers (transactions may have left us on an account page)
+      await page.goto(
+        "https://secure.chase.com/web/auth/dashboard#/dashboard/overview",
+        { waitUntil: "domcontentloaded", timeout: 15000 }
+      );
+      await page.waitForTimeout(3000);
+
+      const offers = await scrapeOffers(page);
       await saveSession(context, config.authStatePath);
 
       return {
@@ -32,6 +42,9 @@ export class ChaseScraper implements Scraper {
         accounts: accounts.map((a) => ({ ...a, institution: "chase" })),
         transactions: transactions.map((t) => ({ ...t, institution: "chase" })),
         holdings: [],
+        offers: offers.length > 0
+          ? offers.map((o) => ({ ...o, institution: "chase" }))
+          : undefined,
       };
     } finally {
       await browser.close();

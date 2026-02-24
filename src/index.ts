@@ -25,6 +25,7 @@ async function main() {
   // Collect optional data from scrapers that provide it
   let cashInterest: ScrapeResult["cashInterest"];
   let stockLending: ScrapeResult["stockLending"];
+  let allOffers: ScrapeResult["offers"];
 
   for (const name of enabledScrapers) {
     const factory = scraperRegistry[name];
@@ -44,10 +45,15 @@ async function main() {
       combined.holdings.push(...result.holdings);
       if (result.cashInterest) cashInterest = result.cashInterest;
       if (result.stockLending) stockLending = result.stockLending;
+      if (result.offers) {
+        allOffers = allOffers || [];
+        allOffers.push(...result.offers);
+      }
       console.log(
         `\n${scraper.displayName}: ${result.accounts.length} account(s), ` +
           `${result.transactions.length} transaction(s), ` +
-          `${result.holdings.length} holding(s)`
+          `${result.holdings.length} holding(s)` +
+          (result.offers ? `, ${result.offers.length} offer(s)` : "")
       );
     } catch (err) {
       console.error(`${scraper.displayName} scraper failed:`, err);
@@ -62,6 +68,7 @@ async function main() {
   // Attach optional data
   if (cashInterest) combined.cashInterest = cashInterest;
   if (stockLending) combined.stockLending = stockLending;
+  if (allOffers) combined.offers = allOffers;
 
   const outputFile = path.join(
     globalConfig.outputDir,

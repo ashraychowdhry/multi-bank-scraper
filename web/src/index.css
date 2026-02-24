@@ -449,6 +449,113 @@ body {
 }
 
 /* ===================== */
+/* Chase Offers          */
+/* ===================== */
+.offers-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 28px;
+}
+
+.offers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.offers-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.offers-count {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.offers-account {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 16px;
+}
+
+.offers-section {
+  margin-bottom: 14px;
+}
+
+.offers-section:last-child {
+  margin-bottom: 0;
+}
+
+.offers-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.offers-section-title.expiring {
+  color: var(--negative);
+}
+
+.offers-section-title.activated {
+  color: var(--accent);
+}
+
+.offers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.offer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.offer-merchant {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.offer-reward {
+  color: var(--positive);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.offer-days-left {
+  color: var(--negative);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.offer-row.activated {
+  opacity: 0.7;
+}
+
+.offer-row.activated .offer-reward {
+  color: var(--accent);
+}
+
+/* ===================== */
 /* Portfolio Grid        */
 /* ===================== */
 .portfolio-grid {
