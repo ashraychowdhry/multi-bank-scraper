@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import type { ScrapeResult, ChaseOffer, AmexOffer } from "@shared/types";
+import type { ScrapeResult, ChaseOffer, AmexOffer, CapitalOneOffer } from "@shared/types";
 
 type OfferFilter = "all" | "activated" | "available" | "expiring";
 
@@ -9,6 +9,7 @@ export function Coupons({ data }: { data: ScrapeResult }) {
 
   const chaseOffers = data.offers || [];
   const amexOffers = data.amexOffers || [];
+  const capitalOneOffers = data.capitalOneOffers || [];
 
   const filteredChase = useMemo(() => {
     let offers = [...chaseOffers];
@@ -38,13 +39,27 @@ export function Coupons({ data }: { data: ScrapeResult }) {
     return offers;
   }, [amexOffers, search, filter]);
 
-  const totalOffers = chaseOffers.length + amexOffers.length;
-  const totalFiltered = filteredChase.length + filteredAmex.length;
+  const filteredCapitalOne = useMemo(() => {
+    let offers = [...capitalOneOffers];
+    if (search) {
+      const q = search.toLowerCase();
+      offers = offers.filter(
+        (o) => o.merchant.toLowerCase().includes(q) || o.description.toLowerCase().includes(q)
+      );
+    }
+    if (filter === "activated") offers = offers.filter((o) => o.isAdded);
+    else if (filter === "available") offers = offers.filter((o) => !o.isAdded);
+    else if (filter === "expiring") offers = offers.filter((o) => !o.isAdded && o.expiresAt);
+    return offers;
+  }, [capitalOneOffers, search, filter]);
+
+  const totalOffers = chaseOffers.length + amexOffers.length + capitalOneOffers.length;
+  const totalFiltered = filteredChase.length + filteredAmex.length + filteredCapitalOne.length;
 
   if (totalOffers === 0) {
     return (
       <div className="coupons-tab">
-        <div className="coupons-empty">No offers available. Run scraper with Chase or Amex to load offers.</div>
+        <div className="coupons-empty">No offers available. Run scraper with Chase, Amex, or Capital One to load offers.</div>
       </div>
     );
   }
@@ -107,6 +122,21 @@ export function Coupons({ data }: { data: ScrapeResult }) {
           </div>
         </section>
       )}
+
+      {/* Capital One Offers */}
+      {filteredCapitalOne.length > 0 && (
+        <section className="coupons-section">
+          <h2 className="section-title">
+            <span className="institution-dot capitalone" />
+            Capital One Offers ({filteredCapitalOne.length})
+          </h2>
+          <div className="coupons-grid">
+            {filteredCapitalOne.map((o, i) => (
+              <CapitalOneOfferCard key={`capitalone-${o.merchant}-${i}`} offer={o} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -130,6 +160,26 @@ function ChaseOfferCard({ offer }: { offer: ChaseOffer }) {
 }
 
 function AmexOfferCard({ offer }: { offer: AmexOffer }) {
+  return (
+    <div className={`coupon-card ${offer.isAdded ? "activated" : ""}`}>
+      <div className="coupon-card-top">
+        <span className="coupon-merchant">{offer.merchant}</span>
+        <span className={`coupon-status ${offer.isAdded ? "added" : "available"}`}>
+          {offer.isAdded ? "Added" : "Available"}
+        </span>
+      </div>
+      <div className="coupon-reward">{offer.description}</div>
+      {offer.expiresAt && (
+        <div className="coupon-expiry">Expires {offer.expiresAt}</div>
+      )}
+      {offer.rewardAmount && (
+        <div className="coupon-amount">{offer.rewardAmount}</div>
+      )}
+    </div>
+  );
+}
+
+function CapitalOneOfferCard({ offer }: { offer: CapitalOneOffer }) {
   return (
     <div className={`coupon-card ${offer.isAdded ? "activated" : ""}`}>
       <div className="coupon-card-top">

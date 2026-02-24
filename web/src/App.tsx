@@ -8,21 +8,23 @@ import { TransactionTable } from "./components/TransactionTable";
 import { HoldingsTab } from "./components/HoldingsTab";
 import { Credit } from "./components/Credit";
 import { Coupons } from "./components/Coupons";
+import { Rewards } from "./components/Rewards";
 
-type Tab = "overview" | "banking" | "transactions" | "holdings" | "credit" | "coupons";
+type Tab = "overview" | "banking" | "transactions" | "holdings" | "credit" | "rewards" | "coupons";
 
 export default function App() {
   const { data, loading, error } = useData();
   const [tab, setTab] = useState<Tab>("overview");
 
   const counts = useMemo(() => {
-    if (!data) return { banking: 0, transactions: 0, holdings: 0, credit: 0, coupons: 0 };
+    if (!data) return { banking: 0, transactions: 0, holdings: 0, credit: 0, rewards: 0, coupons: 0 };
     return {
       banking: data.accounts.filter((a) => a.type === "checking" || a.type === "savings").length,
       transactions: data.transactions.length,
       holdings: data.holdings.length,
       credit: creditAccounts(data.accounts).length,
-      coupons: (data.offers?.length || 0) + (data.amexOffers?.length || 0),
+      rewards: data.capitalOneRewards?.length || 0,
+      coupons: (data.offers?.length || 0) + (data.amexOffers?.length || 0) + (data.capitalOneOffers?.length || 0),
     };
   }, [data]);
 
@@ -85,6 +87,14 @@ export default function App() {
             Credit
           </button>
         )}
+        {counts.rewards > 0 && (
+          <button
+            onClick={() => setTab("rewards")}
+            className={tab === "rewards" ? "active" : ""}
+          >
+            Rewards
+          </button>
+        )}
         {counts.coupons > 0 && (
           <button
             onClick={() => setTab("coupons")}
@@ -100,6 +110,7 @@ export default function App() {
         {tab === "transactions" && <TransactionTable transactions={data.transactions} />}
         {tab === "holdings" && <HoldingsTab data={data} />}
         {tab === "credit" && <Credit data={data} />}
+        {tab === "rewards" && <Rewards data={data} />}
         {tab === "coupons" && <Coupons data={data} />}
       </main>
     </div>

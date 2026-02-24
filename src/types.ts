@@ -81,6 +81,43 @@ export interface AmexCreditCardDetails {
   lastPaymentDate?: string; // YYYY-MM-DD
 }
 
+export interface CapitalOneCardDetails {
+  cardName: string;
+  lastFourDigits: string;
+  statementBalance: number;
+  totalBalance: number;
+  minimumPayment: number;
+  paymentDueDate: string; // YYYY-MM-DD
+  creditLimit: number;
+  availableCredit: number;
+  rewardsBalance?: string; // e.g. "85,000 miles" or "$120.00 cash back"
+}
+
+export interface CapitalOneOffer {
+  merchant: string;
+  description: string;
+  expiresAt?: string;
+  isAdded: boolean;
+  rewardType: "cash back" | "miles" | "other";
+  rewardAmount?: string; // e.g. "5% cash back", "3x miles"
+}
+
+export interface CapitalOneRewards {
+  cardName: string;
+  lastFourDigits: string;
+  rewardsType: "miles" | "cash back" | "points" | "other";
+  totalBalance: string; // "139,555 miles" or "$1,227.26"
+  totalBalanceNumeric: number; // 139555 or 1227.26
+  recentActivity?: CapitalOneRewardActivity[];
+  categoryBreakdown?: { category: string; rate: string; earned: string }[];
+}
+
+export interface CapitalOneRewardActivity {
+  date: string; // YYYY-MM-DD
+  description: string;
+  amount: string; // "+45 miles" or "+$2.34"
+}
+
 export interface ScraperResult {
   institution: string;
   accounts: Account[];
@@ -91,6 +128,9 @@ export interface ScraperResult {
   offers?: ChaseOffer[];
   amexOffers?: AmexOffer[];
   amexCardDetails?: AmexCreditCardDetails;
+  capitalOneCards?: CapitalOneCardDetails[];
+  capitalOneOffers?: CapitalOneOffer[];
+  capitalOneRewards?: CapitalOneRewards[];
 }
 
 export interface ScrapeResult {
@@ -103,4 +143,7 @@ export interface ScrapeResult {
   offers?: ChaseOffer[];
   amexOffers?: AmexOffer[];
   amexCardDetails?: AmexCreditCardDetails;
+  capitalOneCards?: CapitalOneCardDetails[];
+  capitalOneOffers?: CapitalOneOffer[];
+  capitalOneRewards?: CapitalOneRewards[];
 }

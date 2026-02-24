@@ -54,6 +54,8 @@ const PROTECTED_SELECTORS = [
   "#dom-push-primary-button", // Fidelity 2FA
   "#eliloUserID", // Amex
   "#eliloPassword", // Amex
+  "#usernameInputField", // Capital One
+  "#pwInputField", // Capital One
 ];
 
 // Known institution-specific popup patterns

@@ -1,4 +1,4 @@
-import type { ScrapeResult } from "@shared/types";
+import type { ScrapeResult, CapitalOneCardDetails } from "@shared/types";
 import { formatCurrency } from "../utils/format";
 import { creditAccounts, sumBalance, transactionsForAccountTypes, groupBy } from "../utils/accountHelpers";
 import { AccountCard } from "./AccountCard";
@@ -9,9 +9,12 @@ export function Credit({ data }: { data: ScrapeResult }) {
   const totalDebt = sumBalance(cards);
   const creditTxns = transactionsForAccountTypes(data.transactions, data.accounts, ["credit"]);
 
-  // Credit utilization (from amexCardDetails if available)
+  // Credit utilization — aggregate from all sources
   const amex = data.amexCardDetails;
-  const creditLimit = amex?.creditLimit || 0;
+  const capOneCards = data.capitalOneCards || [];
+  const amexLimit = amex?.creditLimit || 0;
+  const capOneLimit = capOneCards.reduce((s, c) => s + c.creditLimit, 0);
+  const creditLimit = amexLimit + capOneLimit;
   const utilization = creditLimit > 0 ? (totalDebt / creditLimit) * 100 : 0;
 
   const accountsByInstitution = groupBy(cards, (a) => a.institution);
@@ -99,6 +102,15 @@ export function Credit({ data }: { data: ScrapeResult }) {
         </div>
       )}
 
+      {/* Capital One Card Details */}
+      {capOneCards.length > 0 && (
+        <div className="credit-details-section">
+          {capOneCards.map((card) => (
+            <CapitalOneCardDetailsCard key={card.lastFourDigits} data={card} />
+          ))}
+        </div>
+      )}
+
       {/* Recent Charges */}
       {recentCharges.length > 0 && (
         <section className="credit-recent">
@@ -132,6 +144,53 @@ export function Credit({ data }: { data: ScrapeResult }) {
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+function CapitalOneCardDetailsCard({ data }: { data: CapitalOneCardDetails }) {
+  return (
+    <div className="card-details-card">
+      <div className="interest-header">
+        <h3>{data.cardName}</h3>
+        {data.paymentDueDate && (
+          <span className="due-date-badge">Due {data.paymentDueDate}</span>
+        )}
+      </div>
+      <div className="card-details-stats">
+        <div className="card-details-stat">
+          <span className="card-details-stat-label">Statement Balance</span>
+          <span className="card-details-stat-value">{formatCurrency(data.statementBalance)}</span>
+        </div>
+        <div className="card-details-stat">
+          <span className="card-details-stat-label">Total Balance</span>
+          <span className="card-details-stat-value">{formatCurrency(data.totalBalance)}</span>
+        </div>
+        {data.minimumPayment > 0 && (
+          <div className="card-details-stat">
+            <span className="card-details-stat-label">Minimum Payment</span>
+            <span className="card-details-stat-value negative">{formatCurrency(data.minimumPayment)}</span>
+          </div>
+        )}
+        {data.availableCredit > 0 && (
+          <div className="card-details-stat">
+            <span className="card-details-stat-label">Available Credit</span>
+            <span className="card-details-stat-value">{formatCurrency(data.availableCredit)}</span>
+          </div>
+        )}
+        {data.creditLimit > 0 && (
+          <div className="card-details-stat">
+            <span className="card-details-stat-label">Credit Limit</span>
+            <span className="card-details-stat-value">{formatCurrency(data.creditLimit)}</span>
+          </div>
+        )}
+        {data.rewardsBalance && (
+          <div className="card-details-stat">
+            <span className="card-details-stat-label">Rewards</span>
+            <span className="card-details-stat-value">{data.rewardsBalance}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

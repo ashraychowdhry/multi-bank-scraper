@@ -18,6 +18,7 @@
   --robinhood-color: #00c805;
   --fidelity-color: #4a8c3f;
   --amex-color: #006fcf;
+  --capitalone-color: #d03027;
 }
 
 *,
@@ -211,6 +212,7 @@ body {
 .institution-dot.robinhood { background: var(--robinhood-color); }
 .institution-dot.fidelity { background: var(--fidelity-color); }
 .institution-dot.amex { background: var(--amex-color); }
+.institution-dot.capitalone { background: var(--capitalone-color); }
 
 /* Account Cards */
 .accounts-row {
@@ -1837,6 +1839,151 @@ tfoot .totals-row td {
 .coupon-source {
   font-size: 11px;
   color: var(--text-muted);
+}
+
+/* ========================= */
+/* Rewards Tab               */
+/* ========================= */
+.rewards-tab {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.rewards-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 60px 20px;
+  font-size: 16px;
+}
+
+.rewards-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.rewards-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.rewards-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rewards-card-title h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.rewards-last-four {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.rewards-type-badge {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(208, 48, 39, 0.12);
+  color: var(--capitalone-color);
+}
+
+.rewards-balance {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rewards-balance-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rewards-balance-value {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.rewards-balance-cash {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.rewards-categories {
+  margin-bottom: 24px;
+}
+
+.rewards-categories h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.rewards-category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rewards-category-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+}
+
+.rewards-category-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.rewards-category-rate {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--positive);
+}
+
+.rewards-category-earned {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.rewards-activity {
+  margin-top: 20px;
+}
+
+.rewards-activity h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
 }
 
 /* =================== */

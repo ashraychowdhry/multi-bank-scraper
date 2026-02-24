@@ -24,6 +24,9 @@ function normalize(raw: Record<string, unknown>): ScrapeResult {
     offers: data.offers,
     amexOffers: data.amexOffers,
     amexCardDetails: data.amexCardDetails,
+    capitalOneCards: data.capitalOneCards,
+    capitalOneOffers: data.capitalOneOffers,
+    capitalOneRewards: data.capitalOneRewards,
   };
 }
 

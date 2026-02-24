@@ -28,6 +28,9 @@ async function main() {
   let allOffers: ScrapeResult["offers"];
   let amexOffers: ScrapeResult["amexOffers"];
   let amexCardDetails: ScrapeResult["amexCardDetails"];
+  let capitalOneCards: ScrapeResult["capitalOneCards"];
+  let capitalOneOffers: ScrapeResult["capitalOneOffers"];
+  let capitalOneRewards: ScrapeResult["capitalOneRewards"];
 
   for (const name of enabledScrapers) {
     const factory = scraperRegistry[name];
@@ -53,6 +56,9 @@ async function main() {
       }
       if (result.amexOffers) amexOffers = result.amexOffers;
       if (result.amexCardDetails) amexCardDetails = result.amexCardDetails;
+      if (result.capitalOneCards) capitalOneCards = result.capitalOneCards;
+      if (result.capitalOneOffers) capitalOneOffers = result.capitalOneOffers;
+      if (result.capitalOneRewards) capitalOneRewards = result.capitalOneRewards;
       console.log(
         `\n${scraper.displayName}: ${result.accounts.length} account(s), ` +
           `${result.transactions.length} transaction(s), ` +
@@ -75,6 +81,9 @@ async function main() {
   if (allOffers) combined.offers = allOffers;
   if (amexOffers) combined.amexOffers = amexOffers;
   if (amexCardDetails) combined.amexCardDetails = amexCardDetails;
+  if (capitalOneCards) combined.capitalOneCards = capitalOneCards;
+  if (capitalOneOffers) combined.capitalOneOffers = capitalOneOffers;
+  if (capitalOneRewards) combined.capitalOneRewards = capitalOneRewards;
 
   const outputFile = path.join(
     globalConfig.outputDir,
