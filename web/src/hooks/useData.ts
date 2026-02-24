@@ -21,6 +21,8 @@ function normalize(raw: Record<string, unknown>): ScrapeResult {
     })),
     cashInterest: data.cashInterest,
     stockLending: data.stockLending,
+    amexOffers: data.amexOffers,
+    amexCardDetails: data.amexCardDetails,
   };
 }
 

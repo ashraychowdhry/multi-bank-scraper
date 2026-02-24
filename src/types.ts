@@ -51,6 +51,26 @@ export interface StockLendingIncome {
   stocksOnLoan: { ticker: string; name: string; shares: number }[];
 }
 
+export interface AmexOffer {
+  merchant: string;
+  description: string;
+  expiresAt?: string;
+  isAdded: boolean;
+  rewardType: "credit" | "points";
+  rewardAmount?: string;
+}
+
+export interface AmexCreditCardDetails {
+  statementBalance: number;
+  totalBalance: number;
+  minimumPayment: number;
+  paymentDueDate: string; // YYYY-MM-DD
+  creditLimit: number;
+  availableCredit: number;
+  lastPaymentAmount?: number;
+  lastPaymentDate?: string; // YYYY-MM-DD
+}
+
 export interface ScraperResult {
   institution: string;
   accounts: Account[];
@@ -58,6 +78,8 @@ export interface ScraperResult {
   holdings: Holding[];
   cashInterest?: CashInterest;
   stockLending?: StockLendingIncome;
+  amexOffers?: AmexOffer[];
+  amexCardDetails?: AmexCreditCardDetails;
 }
 
 export interface ScrapeResult {
@@ -67,4 +89,6 @@ export interface ScrapeResult {
   holdings: Holding[];
   cashInterest?: CashInterest;
   stockLending?: StockLendingIncome;
+  amexOffers?: AmexOffer[];
+  amexCardDetails?: AmexCreditCardDetails;
 }

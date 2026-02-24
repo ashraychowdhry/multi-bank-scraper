@@ -29,6 +29,17 @@ export async function launchBrowser(config: ScraperConfig) {
     context = await browser.newContext(contextOptions);
   }
 
+  // Protect eval from being monkeypatched by sites like Amex.
+  // Their app.js overrides window.eval which breaks Playwright's $$eval/evaluate.
+  await context.addInitScript(() => {
+    const nativeEval = window.eval;
+    Object.defineProperty(window, "eval", {
+      value: nativeEval,
+      writable: false,
+      configurable: false,
+    });
+  });
+
   const page = await context.newPage();
   return { browser, context, page };
 }

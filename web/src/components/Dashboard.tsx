@@ -1,4 +1,4 @@
-import type { ScrapeResult, Account, Holding, CashInterest, StockLendingIncome } from "@shared/types";
+import type { ScrapeResult, Account, Holding, CashInterest, StockLendingIncome, AmexCreditCardDetails, AmexOffer } from "@shared/types";
 import { formatCurrency } from "../utils/format";
 import { aggregateHoldings, type AggregatedHolding } from "../utils/aggregateHoldings";
 import { AccountCard } from "./AccountCard";
@@ -107,6 +107,85 @@ function StockLendingCard({ data }: { data: StockLendingIncome }) {
               </span>
             ))}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AmexCardDetailsCard({ data }: { data: AmexCreditCardDetails }) {
+  return (
+    <div className="card-details-card">
+      <div className="interest-header">
+        <h3>Credit Card Details</h3>
+        {data.paymentDueDate && (
+          <span className="due-date-badge">Due {data.paymentDueDate}</span>
+        )}
+      </div>
+      <div className="card-details-stats">
+        <div className="card-details-stat">
+          <span className="card-details-stat-label">Statement Balance</span>
+          <span className="card-details-stat-value">{formatCurrency(data.statementBalance)}</span>
+        </div>
+        <div className="card-details-stat">
+          <span className="card-details-stat-label">Total Balance</span>
+          <span className="card-details-stat-value">{formatCurrency(data.totalBalance)}</span>
+        </div>
+        {data.minimumPayment > 0 && (
+          <div className="card-details-stat">
+            <span className="card-details-stat-label">Minimum Payment</span>
+            <span className="card-details-stat-value negative">{formatCurrency(data.minimumPayment)}</span>
+          </div>
+        )}
+        {data.availableCredit > 0 && (
+          <div className="card-details-stat">
+            <span className="card-details-stat-label">Available Credit</span>
+            <span className="card-details-stat-value">{formatCurrency(data.availableCredit)}</span>
+          </div>
+        )}
+        {data.creditLimit > 0 && (
+          <div className="card-details-stat">
+            <span className="card-details-stat-label">Credit Limit</span>
+            <span className="card-details-stat-value">{formatCurrency(data.creditLimit)}</span>
+          </div>
+        )}
+        {data.lastPaymentAmount != null && data.lastPaymentAmount > 0 && (
+          <div className="card-details-stat">
+            <span className="card-details-stat-label">
+              Last Payment{data.lastPaymentDate ? ` (${data.lastPaymentDate})` : ""}
+            </span>
+            <span className="card-details-stat-value positive">{formatCurrency(data.lastPaymentAmount)}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AmexOffersCard({ offers }: { offers: AmexOffer[] }) {
+  const added = offers.filter((o) => o.isAdded).length;
+  return (
+    <div className="offers-card">
+      <div className="interest-header">
+        <h3>Amex Offers</h3>
+        <span className="offers-count">{offers.length} offers</span>
+      </div>
+      <div className="offers-list">
+        {offers.slice(0, 10).map((offer, i) => (
+          <div key={i} className="offer-item">
+            <div>
+              <div className="offer-merchant">{offer.merchant}</div>
+              <div className="offer-description">{offer.description}</div>
+            </div>
+            <span className={`offer-badge ${offer.isAdded ? "added" : "available"}`}>
+              {offer.isAdded ? "Added" : "Available"}
+            </span>
+          </div>
+        ))}
+      </div>
+      {offers.length > 10 && (
+        <div style={{ marginTop: 12, fontSize: 13, color: "var(--text-muted)" }}>
+          +{offers.length - 10} more offers ({added} added)
         </div>
       )}
     </div>
@@ -266,6 +345,14 @@ export function Dashboard({ data }: { data: ScrapeResult }) {
         <div className="passive-income-grid">
           {data.cashInterest && <CashInterestCard data={data.cashInterest} />}
           {data.stockLending && <StockLendingCard data={data.stockLending} />}
+        </div>
+      )}
+
+      {/* Amex: Card Details + Offers */}
+      {(data.amexCardDetails || data.amexOffers) && (
+        <div className="passive-income-grid">
+          {data.amexCardDetails && <AmexCardDetailsCard data={data.amexCardDetails} />}
+          {data.amexOffers && <AmexOffersCard offers={data.amexOffers} />}
         </div>
       )}
 
