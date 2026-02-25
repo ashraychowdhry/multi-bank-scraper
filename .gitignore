@@ -5,3 +5,4 @@ dist/
 output/
 web/public/data.json
 web/dist/
+.claude
