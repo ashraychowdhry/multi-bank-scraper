@@ -5,6 +5,7 @@ import { login } from "./login.js";
 import { scrapeAccounts } from "./accounts.js";
 import { scrapeTransactions } from "./transactions.js";
 import { scrapeOffers } from "./offers.js";
+import { scrapeRewards } from "./rewards.js";
 
 export class AmexScraper implements Scraper {
   readonly name = "amex";
@@ -37,6 +38,9 @@ export class AmexScraper implements Scraper {
       // Scrape Amex Offers
       const offers = await scrapeOffers(page);
 
+      // Scrape Membership Rewards points
+      const rewards = await scrapeRewards(page, accountName);
+
       await saveSession(context, config.authStatePath);
 
       return {
@@ -49,6 +53,7 @@ export class AmexScraper implements Scraper {
         holdings: [],
         amexCardDetails: cardDetails || undefined,
         amexOffers: offers.length > 0 ? offers : undefined,
+        amexRewards: rewards || undefined,
       };
     } finally {
       await browser.close();

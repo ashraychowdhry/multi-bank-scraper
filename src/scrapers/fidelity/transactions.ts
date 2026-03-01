@@ -50,7 +50,7 @@ export async function scrapeTransactions(
 /**
  * Scrape history rows from the DOM.
  * Each row is a div with concatenated text like:
- *   "Feb-13-2026RIPPLE LABS 401(K) ***2697Contributions+$5,982.92"
+ *   "Feb-13-2026EMPLOYER 401(K) ***1234Contributions+$X,XXX.XX"
  *
  * Strategy: find all leaf-level divs that start with a date pattern.
  */

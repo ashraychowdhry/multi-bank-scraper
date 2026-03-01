@@ -83,7 +83,7 @@ async function extractRewardsData(
       const bodyText = document.body.textContent || "";
 
       // Look for rewards balance — could be miles, cash back, or points
-      // Patterns: "139,555 Miles", "$1,227.26 Rewards Cash", "85,000 Points"
+      // Patterns: "XX,XXX Miles", "$X,XXX.XX Rewards Cash", "XX,XXX Points"
       let totalBalance = "";
       let totalBalanceNumeric = 0;
       let rewardsType: "miles" | "cash back" | "points" | "other" = "other";

@@ -13,7 +13,7 @@ export async function scrapeAccounts(
   const accounts: RobinhoodAccountData[] = [];
 
   // Portfolio value from h2[data-testid="PortfolioValue"]
-  // Text contains animation chars: "$264,497.45$264,497.459876543210..."
+  // Text contains animation chars: "$XX,XXX.XX$XX,XXX.XX9876543210..."
   // Extract the first dollar amount
   try {
     const portfolioEl = page.locator('[data-testid="PortfolioValue"]');
@@ -56,7 +56,7 @@ export async function scrapeAccounts(
 /**
  * Scrape cash balance from the /account/investing page.
  * Call this AFTER scrapeHoldings, since the page is already navigated there.
- * Table text: "Individual Cash$31,260.16Withdrawable Cash$31,260.16"
+ * Table text: "Individual Cash$X,XXX.XXWithdrawable Cash$X,XXX.XX"
  */
 export async function scrapeCash(
   page: Page
@@ -89,7 +89,7 @@ export async function scrapeCash(
 /**
  * Scrape cash interest data from the /account/investing page.
  * Call this AFTER scrapeHoldings, since the page is already navigated there.
- * Table text: "Annual percentage yield (APY)3.35%Cash earning interest$31,260.16Interest accrued this month$64.25Lifetime interest paid$8,722.91"
+ * Table text: "Annual percentage yield (APY)X.XX%Cash earning interest$X,XXX.XXInterest accrued this month$XX.XXLifetime interest paid$X,XXX.XX"
  */
 export async function scrapeCashInterest(
   page: Page

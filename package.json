@@ -10,12 +10,14 @@
     "dashboard": "vite --config web/vite.config.ts"
   },
   "dependencies": {
+    "better-sqlite3": "^12.6.2",
     "dotenv": "^16.4.0",
     "playwright": "^1.50.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.0.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

@@ -106,8 +106,8 @@ export interface CapitalOneRewards {
   cardName: string;
   lastFourDigits: string;
   rewardsType: "miles" | "cash back" | "points" | "other";
-  totalBalance: string; // "139,555 miles" or "$1,227.26"
-  totalBalanceNumeric: number; // 139555 or 1227.26
+  totalBalance: string; // "XX,XXX miles" or "$X,XXX.XX"
+  totalBalanceNumeric: number; // e.g. 10000 or 1227.26
   recentActivity?: CapitalOneRewardActivity[];
   categoryBreakdown?: { category: string; rate: string; earned: string }[];
 }
@@ -115,7 +115,15 @@ export interface CapitalOneRewards {
 export interface CapitalOneRewardActivity {
   date: string; // YYYY-MM-DD
   description: string;
-  amount: string; // "+45 miles" or "+$2.34"
+  amount: string; // "+XX miles" or "+$X.XX"
+}
+
+export interface AmexRewards {
+  cardName: string;
+  availablePoints: number;
+  pointsEarnedThisYear: number;
+  pointsUsedThisYear: number;
+  recentActivity?: { date: string; description: string; points: string }[];
 }
 
 export interface ScraperResult {
@@ -128,6 +136,7 @@ export interface ScraperResult {
   offers?: ChaseOffer[];
   amexOffers?: AmexOffer[];
   amexCardDetails?: AmexCreditCardDetails;
+  amexRewards?: AmexRewards;
   capitalOneCards?: CapitalOneCardDetails[];
   capitalOneOffers?: CapitalOneOffer[];
   capitalOneRewards?: CapitalOneRewards[];
@@ -143,6 +152,7 @@ export interface ScrapeResult {
   offers?: ChaseOffer[];
   amexOffers?: AmexOffer[];
   amexCardDetails?: AmexCreditCardDetails;
+  amexRewards?: AmexRewards;
   capitalOneCards?: CapitalOneCardDetails[];
   capitalOneOffers?: CapitalOneOffer[];
   capitalOneRewards?: CapitalOneRewards[];

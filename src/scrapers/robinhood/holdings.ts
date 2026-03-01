@@ -8,7 +8,7 @@ export type RobinhoodHoldingData = Omit<Holding, "institution">;
 /**
  * Parse a holding link's text from the /account/investing page.
  * Text format: "{Name}{TICKER}{shares}${price}${avgCost}${totalReturn}${equity}"
- * Example: "Applied DigitalAPLD1,115$29.62$7.01$25,209.01$33,026.41"
+ * Example: "Company NameTICK100$XX.XX$X.XX$X,XXX.XX$X,XXX.XX"
  */
 function parseHoldingLink(
   text: string,
@@ -22,7 +22,7 @@ function parseHoldingLink(
   const name = text.slice(0, match.index).trim() || ticker;
   const dataStr = text.slice(match.index + ticker.length);
 
-  // dataStr: "1,115$29.62$7.01$25,209.01$33,026.41"
+  // dataStr: "100$XX.XX$X.XX$X,XXX.XX$X,XXX.XX"
   const parts = dataStr.split("$");
   if (parts.length < 5) return null;
 

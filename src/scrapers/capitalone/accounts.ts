@@ -181,7 +181,7 @@ async function discoverCards(page: Page): Promise<DiscoveredCard[]> {
 
 async function scrapeRewardsFromDashboard(page: Page): Promise<string> {
   // The rewards section on the dashboard shows combined rewards
-  // like "139,555 Miles |&| $1,227.26 Rewards cash"
+  // like "XX,XXX Miles |&| $X,XXX.XX Rewards cash"
   try {
     const rewardsText = await page.evaluate(() => {
       const allText = document.body.textContent || "";
@@ -252,7 +252,7 @@ async function scrapeCardDetails(
     // Extract card detail data using Capital One's actual DOM structure
     // Hero section: c1-ease-account-hero contains all key data
     // - Current balance: cdk-visually-hidden inside c1-ease-account-hero__secondary-content
-    // - MIN/DUE: c1-ease-account-details-top-right-grid-cell__due-msg → "MIN $88.00 DUE Mar 18"
+    // - MIN/DUE: c1-ease-account-details-top-right-grid-cell__due-msg → "MIN $XX.XX DUE Mon DD"
     // - Available credit: cdk-visually-hidden inside c1-ease-account-details-bottom-middle-grid-cell
     // - Last Statement + Credit Line: c1-ease-account-hero-bottom-right-grid-cell
     // - Rewards: c1-ease-account-hero-bottom-left-grid-cell
@@ -262,7 +262,7 @@ async function scrapeCardDetails(
       const balanceHidden = balanceSection?.querySelector(".cdk-visually-hidden");
       const currentBalance = balanceHidden?.textContent?.trim() || "";
 
-      // MIN + DUE from the due-msg element: "MIN $88.00 DUE Mar 18"
+      // MIN + DUE from the due-msg element: "MIN $XX.XX DUE Mon DD"
       const dueMsg = document.querySelector(".c1-ease-account-details-top-right-grid-cell__due-msg");
       const dueMsgText = dueMsg?.textContent?.trim() || "";
       const minMatch = dueMsgText.match(/MIN\s+(\$[\d,]+\.\d{2})/);
@@ -276,7 +276,7 @@ async function scrapeCardDetails(
       const availableCredit = availHidden?.textContent?.trim() || "";
 
       // Last Statement + Credit Line from bottom-right cell
-      // Text: "Last Statement  $8,891.67  Credit Line  $30,000.00"
+      // Text: "Last Statement  $X,XXX.XX  Credit Line  $XX,XXX.XX"
       const bottomRight = document.querySelector(".c1-ease-account-hero-bottom-right-grid-cell");
       const bottomRightText = bottomRight?.textContent || "";
       const lastStmtMatch = bottomRightText.match(/Last Statement\s+\$?([\d,]+(?:\.\d{2})?)/);

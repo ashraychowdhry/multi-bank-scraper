@@ -3,6 +3,7 @@ dist/
 .env
 .auth/
 output/
+export/
 web/public/data.json
 web/dist/
 .claude

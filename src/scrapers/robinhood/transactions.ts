@@ -49,7 +49,7 @@ function classifyTransaction(description: string): string {
 }
 
 /**
- * Parse a dollar amount string like "$1,241.75" or "+$5,000.00" or "-$100.00"
+ * Parse a dollar amount string like "$X,XXX.XX" or "+$X,XXX.XX" or "-$XXX.XX"
  */
 function parseDollar(str: string): number {
   const cleaned = str.replace(/[+$,]/g, "").replace(/\u2212/g, "-").trim();

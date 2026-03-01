@@ -44,7 +44,7 @@ export async function scrapeAccounts(page: Page): Promise<{
     console.log(`[amex]   Card: ${cardName}`);
 
     // Card number from: data-testid="simple_switcher_display_number_val"
-    // Text is like "••••51001"
+    // Text is like "••••XXXXX"
     const cardNumberRaw = await page
       .locator('[data-testid="simple_switcher_display_number_val"]')
       .first()
@@ -54,12 +54,12 @@ export async function scrapeAccounts(page: Page): Promise<{
     const accountNumber = cardNumberRaw.replace(/[^0-9]/g, "") || "amex";
 
     // Dashboard has three H1.heading-sans-medium-bold elements:
-    // 1. Remaining Statement Balance (e.g., "$1,979.61")
+    // 1. Remaining Statement Balance (e.g., "$X,XXX.XX")
     // 2. Payment Due Date (e.g., "March 13" — not a dollar amount, it's an H1 too)
-    // 3. Total Balance (e.g., "$4,352.80")
+    // 3. Total Balance (e.g., "$X,XXX.XX")
     //
     // We also have:
-    // - Minimum Payment: a SPAN with text "$39.59" near "Minimum Payment Due"
+    // - Minimum Payment: a SPAN with text "$XX.XX" near "Minimum Payment Due"
     // - "No Preset Spending Limit" (no numeric credit limit)
 
     // Extract all H1 amounts on the dashboard

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import { loadGlobalConfig, loadScraperConfig } from "./config.js";
 import { scraperRegistry } from "./scrapers/registry.js";
+import { exportAll } from "./export.js";
 import type { ScrapeResult } from "./types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -28,6 +29,7 @@ async function main() {
   let allOffers: ScrapeResult["offers"];
   let amexOffers: ScrapeResult["amexOffers"];
   let amexCardDetails: ScrapeResult["amexCardDetails"];
+  let amexRewards: ScrapeResult["amexRewards"];
   let capitalOneCards: ScrapeResult["capitalOneCards"];
   let capitalOneOffers: ScrapeResult["capitalOneOffers"];
   let capitalOneRewards: ScrapeResult["capitalOneRewards"];
@@ -56,6 +58,7 @@ async function main() {
       }
       if (result.amexOffers) amexOffers = result.amexOffers;
       if (result.amexCardDetails) amexCardDetails = result.amexCardDetails;
+      if (result.amexRewards) amexRewards = result.amexRewards;
       if (result.capitalOneCards) capitalOneCards = result.capitalOneCards;
       if (result.capitalOneOffers) capitalOneOffers = result.capitalOneOffers;
       if (result.capitalOneRewards) capitalOneRewards = result.capitalOneRewards;
@@ -81,6 +84,7 @@ async function main() {
   if (allOffers) combined.offers = allOffers;
   if (amexOffers) combined.amexOffers = amexOffers;
   if (amexCardDetails) combined.amexCardDetails = amexCardDetails;
+  if (amexRewards) combined.amexRewards = amexRewards;
   if (capitalOneCards) combined.capitalOneCards = capitalOneCards;
   if (capitalOneOffers) combined.capitalOneOffers = capitalOneOffers;
   if (capitalOneRewards) combined.capitalOneRewards = capitalOneRewards;
@@ -91,6 +95,9 @@ async function main() {
   );
   fs.writeFileSync(outputFile, JSON.stringify(combined, null, 2));
   console.log(`\nResults written to: ${outputFile}`);
+
+  // Export to CSV + SQLite
+  exportAll(combined);
 
   // Summary
   console.log("\n=== Account Summary ===");
