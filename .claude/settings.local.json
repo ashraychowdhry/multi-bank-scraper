@@ -41,7 +41,10 @@
       "Bash(SCRAPERS=capitalone NO_DASHBOARD=true HEADLESS=false npm run:*)",
       "Bash(SCRAPERS=chase,robinhood,fidelity,amex,capitalone NO_DASHBOARD=true npm run:*)",
       "Bash(sqlite3:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(SCRAPERS=capitalone NO_DASHBOARD=true npx tsx:*)",
+      "Bash(python3:*)",
+      "Bash(SCRAPERS=chase,amex,capitalone NO_DASHBOARD=true npx tsx:*)"
     ]
   }
 }

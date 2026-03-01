@@ -112,7 +112,7 @@ function normalizeOffers(data: ScrapeResult): NormalizedOffer[] {
         merchant: o.merchant,
         reward: o.reward || "",
         description: "",
-        expires_at: o.daysLeft || "",
+        expires_at: normalizeDaysLeft(o.daysLeft),
         is_active: o.isActivated,
         reward_type: "",
         reward_amount: o.reward || "",
@@ -128,7 +128,7 @@ function normalizeOffers(data: ScrapeResult): NormalizedOffer[] {
         merchant: o.merchant,
         reward: o.rewardAmount || "",
         description: o.description,
-        expires_at: o.expiresAt || "",
+        expires_at: normalizeOfferDate(o.expiresAt),
         is_active: o.isAdded,
         reward_type: o.rewardType,
         reward_amount: o.rewardAmount || "",
@@ -154,6 +154,32 @@ function normalizeOffers(data: ScrapeResult): NormalizedOffer[] {
   }
 
   return offers;
+}
+
+/** Convert Chase "5d left" to an ISO date by adding days to today. */
+function normalizeDaysLeft(daysLeft?: string): string {
+  if (!daysLeft) return "";
+  const match = daysLeft.match(/(\d+)d\s*left/i);
+  if (match) {
+    const days = parseInt(match[1], 10);
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+  return daysLeft;
+}
+
+/** Normalize Amex expiration dates (MM/DD/YY) to ISO YYYY-MM-DD. */
+function normalizeOfferDate(dateStr?: string): string {
+  if (!dateStr) return "";
+  // MM/DD/YY or MM/DD/YYYY
+  const slashMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (slashMatch) {
+    const [, m, d, y] = slashMatch;
+    const year = y.length === 2 ? `20${y}` : y;
+    return `${year}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  return dateStr;
 }
 
 // ── Card details normalization ───────────────────────────────────────────────
