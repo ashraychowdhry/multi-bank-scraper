@@ -96,8 +96,8 @@ async function main() {
   fs.writeFileSync(outputFile, JSON.stringify(combined, null, 2));
   console.log(`\nResults written to: ${outputFile}`);
 
-  // Export to CSV + SQLite
-  exportAll(combined);
+  // Export to CSV + SQLite (pass scraped institutions so partial runs don't erase other data)
+  exportAll(combined, enabledScrapers);
 
   // Summary
   console.log("\n=== Account Summary ===");

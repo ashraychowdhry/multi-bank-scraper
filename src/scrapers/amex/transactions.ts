@@ -6,6 +6,8 @@ import { afterNavigation } from "../popup-guard.js";
 import { parseAmexCSV } from "./csv.js";
 
 const ACTIVITY_URL = "https://global.americanexpress.com/activity/recent";
+const STATEMENTS_URL =
+  "https://global.americanexpress.com/activity?inav=myca_statements";
 
 export async function scrapeTransactions(
   page: Page,
@@ -20,26 +22,256 @@ export async function scrapeTransactions(
   await afterNavigation(page, { scraperName: "amex" });
   await page.waitForTimeout(4000);
 
-  // Try CSV download first (most complete data, includes categories)
-  const csvTransactions = await downloadTransactionsCSV(page, accountName);
-  if (csvTransactions.length > 0) {
-    console.log(
-      `[amex]   ${csvTransactions.length} transaction(s) from CSV.`
-    );
+  const allTransactions: Omit<Transaction, "institution">[] = [];
 
-    // Also try to get pending transactions from the page
-    const pendingTxns = await scrapePendingTransactions(page, accountName);
-    if (pendingTxns.length > 0) {
-      console.log(`[amex]   ${pendingTxns.length} pending transaction(s).`);
-    }
-
-    return [...pendingTxns, ...csvTransactions];
+  // Step 1: Scrape pending transactions first (they only appear on "recent" view)
+  const pendingTxns = await scrapePendingTransactions(page, accountName);
+  if (pendingTxns.length > 0) {
+    console.log(`[amex]   ${pendingTxns.length} pending transaction(s).`);
+    allTransactions.push(...pendingTxns);
   }
 
-  // Fallback: scrape the transaction table from the page
-  console.log("[amex]   CSV not available, scraping transaction table...");
-  return await scrapeTransactionTable(page, accountName);
+  // Step 2: Navigate to Statements & Activity page for historical data
+  // The /activity/recent page has date picker badges in a collapsed panel;
+  // the full statements page (/activity?inav=myca_statements) has them accessible
+  try {
+    console.log("[amex]   Navigating to Statements & Activity page...");
+    await page.goto(STATEMENTS_URL, {
+      waitUntil: "domcontentloaded",
+      timeout: 20000,
+    });
+    await afterNavigation(page, { scraperName: "amex" });
+    await page.waitForTimeout(5000);
+  } catch (err) {
+    console.log(`[amex]   Could not navigate to statements page: ${err}`);
+  }
+
+  // Step 3: Click "View Your YYYY Transactions" link for prior year data
+  // The Statements & Activity page shows a tax season banner with this link
+  let gotHistorical = false;
+  try {
+    const viewYearLink = page
+      .locator(
+        '[data-testid="myca-activity-tax-season-banner/view-year-transactions"]'
+      )
+      .first();
+    if (await viewYearLink.isVisible({ timeout: 3000 }).catch(() => false)) {
+      const linkText =
+        (await viewYearLink.textContent().catch(() => "")) || "";
+      console.log(`[amex]   Clicking "${linkText.trim()}"...`);
+
+      // Extract the year from link text (e.g. "View Your 2025 Transactions")
+      const yearMatch = linkText.match(/(\d{4})/);
+      const priorYear = yearMatch ? parseInt(yearMatch[1]) : undefined;
+
+      await viewYearLink.click();
+      await page.waitForTimeout(5000);
+
+      // Scrape the prior year's transactions, passing the year for correct date parsing
+      const txns = await scrapeCurrentView(page, accountName, priorYear);
+      if (txns.length > 0) {
+        console.log(
+          `[amex]   ${txns.length} transaction(s) from ${priorYear || "prior year"}`
+        );
+        allTransactions.push(...txns);
+        gotHistorical = true;
+      }
+    }
+  } catch (err) {
+    console.log(`[amex]   Error loading prior year: ${err}`);
+  }
+
+  // Step 4: Navigate back to current activity for current year transactions
+  if (gotHistorical) {
+    try {
+      console.log("[amex]   Navigating back to recent activity...");
+      await page.goto(ACTIVITY_URL, {
+        waitUntil: "domcontentloaded",
+        timeout: 20000,
+      });
+      await afterNavigation(page, { scraperName: "amex" });
+      await page.waitForTimeout(4000);
+
+      const recentTxns = await scrapeCurrentView(page, accountName);
+      if (recentTxns.length > 0) {
+        console.log(
+          `[amex]   ${recentTxns.length} transaction(s) from recent activity`
+        );
+        allTransactions.push(...recentTxns);
+      }
+    } catch (err) {
+      console.log(`[amex]   Error loading recent activity: ${err}`);
+    }
+  }
+
+  // Step 5: If no historical data, try date range badges as fallback
+  if (!gotHistorical) {
+    gotHistorical = await scrapeWithDateBadges(
+      page,
+      accountName,
+      allTransactions
+    );
+  }
+
+  // Step 6: If still nothing, scrape current view
+  if (allTransactions.filter((t) => !t.isPending).length === 0) {
+    console.log("[amex]   No historical data found, scraping current view...");
+    const csv = await downloadTransactionsCSV(page, accountName);
+    if (csv.length > 0) {
+      allTransactions.push(...csv);
+    } else {
+      const domTxns = await scrapeTransactionTable(page, accountName);
+      allTransactions.push(...domTxns);
+    }
+  }
+
+  // Deduplicate by date+description+amount
+  const seen = new Set<string>();
+  const deduped = allTransactions.filter((t) => {
+    const key = `${t.date}|${t.description}|${t.amount}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const dates = deduped
+    .filter((t) => !t.isPending)
+    .map((t) => t.date)
+    .sort();
+  if (dates.length > 0) {
+    console.log(
+      `[amex]   Total: ${deduped.length} unique transaction(s), ` +
+        `${dates[0]} to ${dates[dates.length - 1]}`
+    );
+  }
+  return deduped;
 }
+
+/**
+ * Try clicking date range badges to get historical transactions.
+ * Returns true if any historical data was scraped.
+ */
+async function scrapeWithDateBadges(
+  page: Page,
+  accountName: string,
+  allTransactions: Omit<Transaction, "institution">[]
+): Promise<boolean> {
+  let gotHistorical = false;
+
+  // Try year badges first (broadest coverage)
+  const yearBadges = [
+    { testId: "dateRangePicker.yearBadge", label: "prior year" },
+    {
+      testId: "dateRangePicker.currentYearBadge",
+      label: "current year to date",
+    },
+  ];
+
+  for (const { testId, label } of yearBadges) {
+    try {
+      const badge = page.locator(`[data-testid="${testId}"]`).first();
+      // Scroll into view first — badges may be below the fold
+      await badge
+        .scrollIntoViewIfNeeded({ timeout: 2000 })
+        .catch(() => {});
+
+      const visible = await badge
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
+
+      if (visible) {
+        const badgeText = await badge.textContent().catch(() => "");
+        console.log(
+          `[amex]   Clicking date range: "${badgeText?.trim()}" (${label})`
+        );
+        await badge.click();
+      } else {
+        // Badge exists in DOM but not visible — try force click
+        const count = await badge.count();
+        if (count > 0) {
+          console.log(
+            `[amex]   Badge ${testId} not visible, trying force click...`
+          );
+          await badge.click({ force: true, timeout: 3000 });
+        } else {
+          continue;
+        }
+      }
+
+      await page.waitForTimeout(5000);
+
+      // Try CSV download, then DOM scraping
+      const txns = await scrapeCurrentView(page, accountName);
+      if (txns.length > 0) {
+        console.log(`[amex]   ${txns.length} transaction(s) (${label})`);
+        allTransactions.push(...txns);
+        gotHistorical = true;
+      }
+    } catch (err) {
+      console.log(`[amex]   Error with ${testId}: ${err}`);
+    }
+  }
+
+  // If year badges didn't work, try individual billing period badges
+  if (!gotHistorical) {
+    try {
+      const billingBadges = await page
+        .locator('[data-testid="dateRangePicker.billingPeriodBadge"]')
+        .all();
+      console.log(
+        `[amex]   Found ${billingBadges.length} billing period badge(s)`
+      );
+
+      for (let i = 0; i < billingBadges.length; i++) {
+        try {
+          await billingBadges[i]
+            .scrollIntoViewIfNeeded({ timeout: 1000 })
+            .catch(() => {});
+          const text = await billingBadges[i].textContent().catch(() => "");
+          console.log(`[amex]   Clicking billing period: "${text?.trim()}"`);
+
+          const visible = await billingBadges[i]
+            .isVisible({ timeout: 1000 })
+            .catch(() => false);
+          if (visible) {
+            await billingBadges[i].click();
+          } else {
+            await billingBadges[i].click({ force: true, timeout: 3000 });
+          }
+          await page.waitForTimeout(4000);
+
+          const txns = await scrapeCurrentView(page, accountName);
+          if (txns.length > 0) {
+            console.log(`[amex]     ${txns.length} transaction(s)`);
+            allTransactions.push(...txns);
+            gotHistorical = true;
+          }
+        } catch (err) {
+          console.log(`[amex]   Error with billing badge ${i}: ${err}`);
+        }
+      }
+    } catch (err) {
+      console.log(`[amex]   Error finding billing badges: ${err}`);
+    }
+  }
+
+  return gotHistorical;
+}
+
+/**
+ * Try CSV download first, fall back to DOM scraping.
+ * @param defaultYear — year to use for dates that don't include one (e.g. 2025 for prior year view)
+ */
+async function scrapeCurrentView(
+  page: Page,
+  accountName: string,
+  defaultYear?: number
+): Promise<Omit<Transaction, "institution">[]> {
+  const csv = await downloadTransactionsCSV(page, accountName);
+  if (csv.length > 0) return csv;
+  return scrapeTransactionTable(page, accountName, defaultYear);
+}
+
 
 async function downloadTransactionsCSV(
   page: Page,
@@ -216,9 +448,11 @@ async function scrapePendingTransactions(
 
 async function scrapeTransactionTable(
   page: Page,
-  accountName: string
+  accountName: string,
+  defaultYear?: number
 ): Promise<Omit<Transaction, "institution">[]> {
   const transactions: Omit<Transaction, "institution">[] = [];
+  const yearToUse = defaultYear || new Date().getFullYear();
 
   try {
     // Wait for the transaction table to load
@@ -263,10 +497,10 @@ async function scrapeTransactionTable(
     for (const r of rowData) {
       if (!r.date || !r.amount) continue;
 
-      // Date is like "Feb 23" — append current year
+      // Date is like "Feb 23" — append the appropriate year
       const dateStr = r.date.match(/\d{4}/)
         ? r.date
-        : `${r.date}, ${new Date().getFullYear()}`;
+        : `${r.date}, ${yearToUse}`;
 
       const rawAmount = parseBalance(r.amount);
       // In the Amex activity page DOM:

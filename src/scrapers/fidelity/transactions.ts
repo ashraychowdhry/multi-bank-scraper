@@ -22,7 +22,7 @@ const ACTIVITY_URL =
 
 /**
  * Scrape transactions from Fidelity's Activity & Orders page.
- * Clicks "History" filter, then scrapes the DOM rows.
+ * Clicks "History" filter, expands the date range, then scrapes the DOM rows.
  */
 export async function scrapeTransactions(
   page: Page
@@ -44,7 +44,160 @@ export async function scrapeTransactions(
     console.log("[fidelity] Switched to History view.");
   }
 
+  // Try to expand the date range to get more than the default 30 days
+  await expandDateRange(page);
+
   return await scrapeHistoryRows(page);
+}
+
+/**
+ * Try to expand the time period on Fidelity's activity page.
+ * Opens the date filter panel, then tries radio buttons first (simpler),
+ * then falls back to the Custom tab with date inputs.
+ */
+async function expandDateRange(page: Page): Promise<void> {
+  try {
+    // Step 1: Find and click the period trigger button to open the filter panel
+    // The button text reflects the current period, e.g. "Past 30 days"
+    const triggerSelectors = [
+      'button:has-text("Past 30 days")',
+      'button:has-text("Past 10 days")',
+      'button:has-text("Past 60 days")',
+      'button:has-text("Past 90 days")',
+      'button:has-text("Year to date")',
+      'button:has-text("Time Period")',
+      'button:has-text("Date Range")',
+    ];
+
+    let panelOpened = false;
+    for (const sel of triggerSelectors) {
+      const trigger = page.locator(sel).first();
+      if (await trigger.isVisible({ timeout: 1500 }).catch(() => false)) {
+        console.log(`[fidelity]   Found period trigger: "${sel}"`);
+        await trigger.click();
+        await page.waitForTimeout(2000);
+        panelOpened = true;
+        break;
+      }
+    }
+
+    if (!panelOpened) {
+      console.log(
+        "[fidelity]   Could not find date range trigger, using default period."
+      );
+      return;
+    }
+
+    // Step 2: Try Custom tab FIRST (gives 1-year range, broadest coverage)
+    let customTabWorked = false;
+    const customSelectors = [
+      '.pvd-segment__label-text:has-text("Custom")',
+      'text="Custom"',
+      'button:has-text("Custom")',
+    ];
+
+    for (const ctSel of customSelectors) {
+      const customTab = page.locator(ctSel).first();
+      if (await customTab.isVisible({ timeout: 1500 }).catch(() => false)) {
+        console.log("[fidelity]   Clicking 'Custom' tab...");
+        // Use force:true — pvd components may have label overlays
+        await customTab.click({ force: true });
+        await page.waitForTimeout(3000);
+
+        // Fidelity uses native date inputs (type="date") with IDs:
+        //   #customized-timeperiod-from-date
+        //   #customized-timeperiod-to-date
+        // These require YYYY-MM-DD format
+        const fromInput = page.locator("#customized-timeperiod-from-date").first();
+        const toInput = page.locator("#customized-timeperiod-to-date").first();
+
+        if (
+          (await fromInput.isVisible({ timeout: 2000 }).catch(() => false)) &&
+          (await toInput.isVisible({ timeout: 1000 }).catch(() => false))
+        ) {
+          const oneYearAgo = new Date();
+          oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+          const today = new Date();
+          const startDate = `${oneYearAgo.getFullYear()}-${String(oneYearAgo.getMonth() + 1).padStart(2, "0")}-${String(oneYearAgo.getDate()).padStart(2, "0")}`;
+          const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+          console.log(
+            `[fidelity]   Setting date range: ${startDate} to ${endDate}`
+          );
+          await fromInput.fill(startDate);
+          await page.waitForTimeout(500);
+          await toInput.fill(endDate);
+          await page.waitForTimeout(1000);
+
+          // Click Apply button
+          const applyBtn = page
+            .locator('button:has-text("Apply")')
+            .first();
+          if (
+            await applyBtn.isVisible({ timeout: 3000 }).catch(() => false)
+          ) {
+            console.log("[fidelity]   Clicking Apply...");
+            await applyBtn.click();
+            await page.waitForTimeout(5000);
+            customTabWorked = true;
+            return;
+          }
+        } else {
+          console.log("[fidelity]   Date inputs not found in custom panel.");
+          // Switch back to Recent tab so radio buttons are available
+          const recentTab = page.locator("#Recent").first();
+          if (await recentTab.isVisible({ timeout: 1000 }).catch(() => false)) {
+            console.log("[fidelity]   Switching back to 'Recent' tab...");
+            await recentTab.click({ force: true });
+            await page.waitForTimeout(1000);
+          }
+        }
+        break;
+      }
+    }
+
+    if (customTabWorked) return;
+
+    // Step 3: Fall back to radio buttons (limited coverage but simpler)
+    const radioSelectors = [
+      'text="Year to date"',
+      '.pvd-radio__label-text:has-text("Year to date")',
+      'label:has-text("Year to date")',
+      'text="Past 90 days"',
+      '.pvd-radio__label-text:has-text("Past 90 days")',
+      'label:has-text("Past 90 days")',
+    ];
+
+    for (const optSel of radioSelectors) {
+      const opt = page.locator(optSel).first();
+      if (await opt.isVisible({ timeout: 1000 }).catch(() => false)) {
+        console.log(`[fidelity]   Clicking radio option: "${optSel}"`);
+        // Use force:true — pvd-radio label overlays intercept pointer events
+        await opt.click({ force: true });
+        await page.waitForTimeout(1000);
+
+        const applyBtn = page.locator('button:has-text("Apply")').first();
+        if (
+          await applyBtn.isVisible({ timeout: 2000 }).catch(() => false)
+        ) {
+          console.log("[fidelity]   Clicking Apply...");
+          await applyBtn.click();
+          await page.waitForTimeout(5000);
+        } else {
+          await page.waitForTimeout(3000);
+        }
+        return;
+      }
+    }
+
+    // Close the panel if nothing worked
+    await page.keyboard.press("Escape");
+    console.log(
+      "[fidelity]   Could not expand date range, using default period."
+    );
+  } catch (err) {
+    console.log(`[fidelity]   Error expanding date range: ${err}`);
+  }
 }
 
 /**

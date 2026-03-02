@@ -62,7 +62,7 @@ function parseDollar(str: string): number {
  */
 export async function scrapeTransactions(
   page: Page,
-  maxScrolls = 10
+  maxScrolls = 30
 ): Promise<RobinhoodTransactionData[]> {
   console.log("[robinhood] Navigating to history page...");
 

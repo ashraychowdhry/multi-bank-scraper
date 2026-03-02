@@ -59,6 +59,40 @@ function readExistingTransactions(
   return { keys, rows };
 }
 
+/** Read existing CSV and return rows not belonging to any of the scraped institutions. */
+function readPreservedRows(
+  filePath: string,
+  institutionColIndex: number,
+  scrapedInstitutions: Set<string>
+): unknown[][] {
+  if (!fs.existsSync(filePath)) return [];
+  const content = fs.readFileSync(filePath, "utf-8").trim();
+  const lines = content.split("\n");
+  if (lines.length <= 1) return [];
+
+  const preserved: unknown[][] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const fields = parseCsvLine(lines[i]);
+    const inst = String(fields[institutionColIndex] || "");
+    if (inst && !scrapedInstitutions.has(inst)) {
+      preserved.push(fields);
+    }
+  }
+  return preserved;
+}
+
+/** Write a snapshot CSV, preserving rows from institutions not scraped in this run. */
+function writeSnapshotCsv(
+  filePath: string,
+  headers: string[],
+  newRows: unknown[][],
+  institutionColIndex: number,
+  scrapedInstitutions: Set<string>
+): void {
+  const preserved = readPreservedRows(filePath, institutionColIndex, scrapedInstitutions);
+  writeCsv(filePath, headers, [...preserved, ...newRows]);
+}
+
 /** Minimal CSV line parser that handles quoted fields. */
 function parseCsvLine(line: string): string[] {
   const fields: string[] = [];
@@ -238,22 +272,23 @@ function normalizeCardDetails(data: ScrapeResult): NormalizedCardDetails[] {
 
 // ── CSV Export ────────────────────────────────────────────────────────────────
 
-export function exportToCSV(data: ScrapeResult, dir: string): void {
+export function exportToCSV(data: ScrapeResult, dir: string, scrapedInstitutions: Set<string>): void {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   const ts = data.scrapedAt;
 
-  // Accounts (overwrite)
-  writeCsv(
+  // Accounts (snapshot — preserve rows from non-scraped institutions)
+  const accountHeaders = [
+    "institution",
+    "name",
+    "type",
+    "current_balance",
+    "available_balance",
+    "account_number",
+    "scraped_at",
+  ];
+  writeSnapshotCsv(
     path.join(dir, "accounts.csv"),
-    [
-      "institution",
-      "name",
-      "type",
-      "current_balance",
-      "available_balance",
-      "account_number",
-      "scraped_at",
-    ],
+    accountHeaders,
     data.accounts.map((a) => [
       a.institution,
       a.name,
@@ -262,7 +297,9 @@ export function exportToCSV(data: ScrapeResult, dir: string): void {
       a.availableBalance ?? "",
       a.accountNumber,
       ts,
-    ])
+    ]),
+    0, // institution is column 0
+    scrapedInstitutions
   );
 
   // Transactions (append + dedup)
@@ -296,22 +333,23 @@ export function exportToCSV(data: ScrapeResult, dir: string): void {
   }
   writeCsv(txPath, txHeaders, existing.rows);
 
-  // Holdings (overwrite)
-  writeCsv(
+  // Holdings (snapshot — preserve rows from non-scraped institutions)
+  const holdingsHeaders = [
+    "ticker",
+    "name",
+    "shares",
+    "current_price",
+    "current_value",
+    "cost_basis",
+    "gain_loss",
+    "gain_loss_percent",
+    "institution",
+    "account_name",
+    "scraped_at",
+  ];
+  writeSnapshotCsv(
     path.join(dir, "holdings.csv"),
-    [
-      "ticker",
-      "name",
-      "shares",
-      "current_price",
-      "current_value",
-      "cost_basis",
-      "gain_loss",
-      "gain_loss_percent",
-      "institution",
-      "account_name",
-      "scraped_at",
-    ],
+    holdingsHeaders,
     data.holdings.map((h) => [
       h.ticker,
       h.name,
@@ -324,7 +362,9 @@ export function exportToCSV(data: ScrapeResult, dir: string): void {
       h.institution,
       h.accountName || "",
       ts,
-    ])
+    ]),
+    8, // institution is column 8
+    scrapedInstitutions
   );
 
   // Cash interest (overwrite)
@@ -366,73 +406,75 @@ export function exportToCSV(data: ScrapeResult, dir: string): void {
     );
   }
 
-  // Offers (overwrite — all institutions)
+  // Offers (snapshot — preserve rows from non-scraped institutions)
   const offers = normalizeOffers(data);
-  if (offers.length > 0) {
-    writeCsv(
-      path.join(dir, "offers.csv"),
-      [
-        "institution",
-        "merchant",
-        "reward",
-        "description",
-        "expires_at",
-        "is_active",
-        "reward_type",
-        "reward_amount",
-        "account_name",
-        "scraped_at",
-      ],
-      offers.map((o) => [
-        o.institution,
-        o.merchant,
-        o.reward,
-        o.description,
-        o.expires_at,
-        o.is_active ? "true" : "false",
-        o.reward_type,
-        o.reward_amount,
-        o.account_name,
-        ts,
-      ])
-    );
-  }
+  const offersHeaders = [
+    "institution",
+    "merchant",
+    "reward",
+    "description",
+    "expires_at",
+    "is_active",
+    "reward_type",
+    "reward_amount",
+    "account_name",
+    "scraped_at",
+  ];
+  writeSnapshotCsv(
+    path.join(dir, "offers.csv"),
+    offersHeaders,
+    offers.map((o) => [
+      o.institution,
+      o.merchant,
+      o.reward,
+      o.description,
+      o.expires_at,
+      o.is_active ? "true" : "false",
+      o.reward_type,
+      o.reward_amount,
+      o.account_name,
+      ts,
+    ]),
+    0, // institution is column 0
+    scrapedInstitutions
+  );
 
-  // Card details (overwrite — Amex + Capital One)
+  // Card details (snapshot — preserve rows from non-scraped institutions)
   const cards = normalizeCardDetails(data);
-  if (cards.length > 0) {
-    writeCsv(
-      path.join(dir, "card_details.csv"),
-      [
-        "institution",
-        "card_name",
-        "last_four_digits",
-        "statement_balance",
-        "total_balance",
-        "minimum_payment",
-        "payment_due_date",
-        "credit_limit",
-        "available_credit",
-        "rewards_balance",
-        "scraped_at",
-      ],
-      cards.map((c) => [
-        c.institution,
-        c.card_name,
-        c.last_four_digits,
-        c.statement_balance,
-        c.total_balance,
-        c.minimum_payment,
-        c.payment_due_date,
-        c.credit_limit,
-        c.available_credit,
-        c.rewards_balance,
-        ts,
-      ])
-    );
-  }
+  const cardHeaders = [
+    "institution",
+    "card_name",
+    "last_four_digits",
+    "statement_balance",
+    "total_balance",
+    "minimum_payment",
+    "payment_due_date",
+    "credit_limit",
+    "available_credit",
+    "rewards_balance",
+    "scraped_at",
+  ];
+  writeSnapshotCsv(
+    path.join(dir, "card_details.csv"),
+    cardHeaders,
+    cards.map((c) => [
+      c.institution,
+      c.card_name,
+      c.last_four_digits,
+      c.statement_balance,
+      c.total_balance,
+      c.minimum_payment,
+      c.payment_due_date,
+      c.credit_limit,
+      c.available_credit,
+      c.rewards_balance,
+      ts,
+    ]),
+    0, // institution is column 0
+    scrapedInstitutions
+  );
 
-  // Rewards (overwrite — Capital One + Amex combined)
+  // Rewards (snapshot — preserve rows from non-scraped institutions)
   const rewardsRows: unknown[][] = [];
   if (data.capitalOneRewards) {
     for (const r of data.capitalOneRewards) {
@@ -463,23 +505,24 @@ export function exportToCSV(data: ScrapeResult, dir: string): void {
       ts,
     ]);
   }
-  if (rewardsRows.length > 0) {
-    writeCsv(
-      path.join(dir, "rewards.csv"),
-      [
-        "institution",
-        "card_name",
-        "last_four_digits",
-        "rewards_type",
-        "total_balance",
-        "total_balance_numeric",
-        "earned_this_year",
-        "used_this_year",
-        "scraped_at",
-      ],
-      rewardsRows
-    );
-  }
+  const rewardsHeaders = [
+    "institution",
+    "card_name",
+    "last_four_digits",
+    "rewards_type",
+    "total_balance",
+    "total_balance_numeric",
+    "earned_this_year",
+    "used_this_year",
+    "scraped_at",
+  ];
+  writeSnapshotCsv(
+    path.join(dir, "rewards.csv"),
+    rewardsHeaders,
+    rewardsRows,
+    0, // institution is column 0
+    scrapedInstitutions
+  );
 }
 
 // ── SQLite Export ─────────────────────────────────────────────────────────────
@@ -585,7 +628,7 @@ const SCHEMA = `
   );
 `;
 
-export function exportToSQLite(data: ScrapeResult, dbPath: string): void {
+export function exportToSQLite(data: ScrapeResult, dbPath: string, scrapedInstitutions: Set<string>): void {
   const dir = path.dirname(dbPath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
@@ -594,9 +637,11 @@ export function exportToSQLite(data: ScrapeResult, dbPath: string): void {
   db.exec(SCHEMA);
 
   const ts = data.scrapedAt;
+  const instList = [...scrapedInstitutions];
+  const instPlaceholders = instList.map(() => "?").join(",");
 
-  // Accounts — snapshot (delete + insert)
-  db.exec("DELETE FROM accounts");
+  // Accounts — snapshot (delete only scraped institutions, then insert)
+  db.prepare(`DELETE FROM accounts WHERE institution IN (${instPlaceholders})`).run(...instList);
   const insertAccount = db.prepare(
     `INSERT INTO accounts (institution, name, type, current_balance, available_balance, account_number, scraped_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -634,8 +679,8 @@ export function exportToSQLite(data: ScrapeResult, dbPath: string): void {
   });
   insertTxMany(data.transactions);
 
-  // Holdings — snapshot
-  db.exec("DELETE FROM holdings");
+  // Holdings — snapshot (delete only scraped institutions)
+  db.prepare(`DELETE FROM holdings WHERE institution IN (${instPlaceholders})`).run(...instList);
   const insertHolding = db.prepare(
     `INSERT INTO holdings (ticker, name, shares, current_price, current_value, cost_basis, gain_loss, gain_loss_percent, institution, account_name, scraped_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -687,10 +732,10 @@ export function exportToSQLite(data: ScrapeResult, dbPath: string): void {
     }
   }
 
-  // Offers — snapshot (all institutions)
+  // Offers — snapshot (delete only scraped institutions)
   const offers = normalizeOffers(data);
+  db.prepare(`DELETE FROM offers WHERE institution IN (${instPlaceholders})`).run(...instList);
   if (offers.length > 0) {
-    db.exec("DELETE FROM offers");
     const insertOffer = db.prepare(
       `INSERT INTO offers (institution, merchant, reward, description, expires_at, is_active, reward_type, reward_amount, account_name, scraped_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -711,10 +756,10 @@ export function exportToSQLite(data: ScrapeResult, dbPath: string): void {
     }
   }
 
-  // Card details — snapshot
+  // Card details — snapshot (delete only scraped institutions)
   const cards = normalizeCardDetails(data);
+  db.prepare(`DELETE FROM card_details WHERE institution IN (${instPlaceholders})`).run(...instList);
   if (cards.length > 0) {
-    db.exec("DELETE FROM card_details");
     const insertCard = db.prepare(
       `INSERT INTO card_details (institution, card_name, last_four_digits, statement_balance, total_balance, minimum_payment, payment_due_date, credit_limit, available_credit, rewards_balance, scraped_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -736,12 +781,12 @@ export function exportToSQLite(data: ScrapeResult, dbPath: string): void {
     }
   }
 
-  // Rewards — snapshot (Capital One + Amex)
+  // Rewards — snapshot (delete only scraped institutions)
+  db.prepare(`DELETE FROM rewards WHERE institution IN (${instPlaceholders})`).run(...instList);
   const hasRewards =
     (data.capitalOneRewards && data.capitalOneRewards.length > 0) ||
     data.amexRewards;
   if (hasRewards) {
-    db.exec("DELETE FROM rewards");
     const insertReward = db.prepare(
       `INSERT INTO rewards (institution, card_name, last_four_digits, rewards_type, total_balance, total_balance_numeric, earned_this_year, used_this_year, scraped_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -782,13 +827,21 @@ export function exportToSQLite(data: ScrapeResult, dbPath: string): void {
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-export function exportAll(data: ScrapeResult): void {
+export function exportAll(data: ScrapeResult, scrapedInstitutionsList?: string[]): void {
   console.log("\n=== Exporting to CSV + SQLite ===");
 
-  exportToCSV(data, EXPORT_DIR);
+  // Determine which institutions were scraped in this run
+  const scrapedInstitutions = new Set<string>(scrapedInstitutionsList || []);
+  // Also include any institutions found in the data itself
+  for (const a of data.accounts) scrapedInstitutions.add(a.institution);
+  for (const h of data.holdings) scrapedInstitutions.add(h.institution);
+
+  console.log(`  Scraped institutions: ${[...scrapedInstitutions].join(", ")}`);
+
+  exportToCSV(data, EXPORT_DIR, scrapedInstitutions);
   console.log(`CSV files written to ${EXPORT_DIR}/`);
 
-  exportToSQLite(data, path.join(EXPORT_DIR, "bank-scraper.db"));
+  exportToSQLite(data, path.join(EXPORT_DIR, "bank-scraper.db"), scrapedInstitutions);
   console.log(`SQLite database written to ${EXPORT_DIR}/bank-scraper.db`);
 
   // Summary
