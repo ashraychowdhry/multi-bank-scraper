@@ -47,7 +47,16 @@
       "Bash(SCRAPERS=chase,amex,capitalone NO_DASHBOARD=true npx tsx:*)",
       "Bash(wc:*)",
       "Bash(SCRAPERS=amex,fidelity NO_DASHBOARD=true npm run:*)",
-      "Bash(SCRAPERS=fidelity,amex NO_DASHBOARD=true npm run:*)"
+      "Bash(SCRAPERS=fidelity,amex NO_DASHBOARD=true npm run:*)",
+      "WebFetch(domain:support.apple.com)",
+      "WebFetch(domain:robinhood.com)",
+      "WebFetch(domain:www.markjberger.com)",
+      "WebFetch(domain:www.monarch.com)",
+      "WebFetch(domain:www.macrumors.com)",
+      "WebFetch(domain:x.com)",
+      "WebFetch(domain:robin-stocks.readthedocs.io)",
+      "WebFetch(domain:api.robinhood.com)",
+      "WebFetch(domain:www.xmodulo.com)"
     ]
   }
 }

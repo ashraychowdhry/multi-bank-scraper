@@ -98,19 +98,11 @@ export async function scrapeHoldings(
     }
   }
 
-  const stocks = holdings.filter((h) =>
-    holdingLinks.some(
-      (l) => l.href.startsWith("/stocks/") && l.href.includes(h.ticker)
-    )
-  );
-  const crypto = holdings.filter((h) =>
-    holdingLinks.some(
-      (l) => l.href.startsWith("/crypto/") && l.href.includes(h.ticker)
-    )
-  );
+  const stockCount = holdingLinks.filter((l) => l.href.startsWith("/stocks/")).length;
+  const cryptoCount = holdingLinks.filter((l) => l.href.startsWith("/crypto/")).length;
 
   console.log(
-    `[robinhood] Scraped ${stocks.length} stocks + ${crypto.length} crypto = ${holdings.length} holdings`
+    `[robinhood] Scraped ${stockCount} stocks + ${cryptoCount} crypto = ${holdings.length} holdings`
   );
   return holdings;
 }

@@ -7,6 +7,7 @@ import type {
   AmexOffer,
   CapitalOneOffer,
 } from "./types.js";
+import { parseCSVLine } from "./scrapers/utils.js";
 
 const EXPORT_DIR = "export";
 
@@ -47,7 +48,7 @@ function readExistingTransactions(
 
   // Skip header, parse each line
   for (let i = 1; i < lines.length; i++) {
-    const fields = parseCsvLine(lines[i]);
+    const fields = parseCSVLine(lines[i]);
     if (fields.length < 7) continue;
     // dedup key: date|description|amount|account_name|institution
     const key = `${fields[0]}|${fields[1]}|${fields[2]}|${fields[5]}|${fields[6]}`;
@@ -72,7 +73,7 @@ function readPreservedRows(
 
   const preserved: unknown[][] = [];
   for (let i = 1; i < lines.length; i++) {
-    const fields = parseCsvLine(lines[i]);
+    const fields = parseCSVLine(lines[i]);
     const inst = String(fields[institutionColIndex] || "");
     if (inst && !scrapedInstitutions.has(inst)) {
       preserved.push(fields);
@@ -91,35 +92,6 @@ function writeSnapshotCsv(
 ): void {
   const preserved = readPreservedRows(filePath, institutionColIndex, scrapedInstitutions);
   writeCsv(filePath, headers, [...preserved, ...newRows]);
-}
-
-/** Minimal CSV line parser that handles quoted fields. */
-function parseCsvLine(line: string): string[] {
-  const fields: string[] = [];
-  let current = "";
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (inQuotes) {
-      if (ch === '"' && line[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else if (ch === '"') {
-        inQuotes = false;
-      } else {
-        current += ch;
-      }
-    } else if (ch === '"') {
-      inQuotes = true;
-    } else if (ch === ",") {
-      fields.push(current);
-      current = "";
-    } else {
-      current += ch;
-    }
-  }
-  fields.push(current);
-  return fields;
 }
 
 // ── Offer normalization ──────────────────────────────────────────────────────

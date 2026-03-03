@@ -1,6 +1,6 @@
 import type { Page } from "playwright";
 import type { Transaction } from "../../types.js";
-import { parseBalance } from "../utils.js";
+import { parseBalance, MONTH_MAP } from "../utils.js";
 import { afterNavigation } from "../popup-guard.js";
 
 function classifyFidelityTransaction(description: string): string | undefined {
@@ -320,12 +320,7 @@ async function scrapeHistoryRows(
 
     // Determine date — format is "Mon-DD-YYYY"
     const parts = r.date.split("-");
-    const months: Record<string, string> = {
-      Jan: "01", Feb: "02", Mar: "03", Apr: "04",
-      May: "05", Jun: "06", Jul: "07", Aug: "08",
-      Sep: "09", Oct: "10", Nov: "11", Dec: "12",
-    };
-    const isoDate = `${parts[2]}-${months[parts[0]] || "01"}-${parts[1].padStart(2, "0")}`;
+    const isoDate = `${parts[2]}-${MONTH_MAP[parts[0]] || "01"}-${parts[1].padStart(2, "0")}`;
 
     const description = r.description || "Unknown";
     return {

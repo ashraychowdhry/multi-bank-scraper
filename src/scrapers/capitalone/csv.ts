@@ -1,5 +1,5 @@
 import type { Transaction } from "../../types.js";
-import { normalizeDate, parseCSVLine } from "../utils.js";
+import { normalizeDate, parseCSVLine, classifyTransaction } from "../utils.js";
 
 /**
  * Parse Capital One CSV export.
@@ -124,15 +124,3 @@ export function parseCapitalOneCSV(
   return transactions;
 }
 
-function classifyTransaction(description: string): string | undefined {
-  const d = description.toLowerCase();
-  if (
-    d.includes("payment") &&
-    (d.includes("thank you") || d.includes("received"))
-  )
-    return "Payment";
-  if (d.includes("autopay")) return "Payment";
-  if (d.includes("credit") && d.includes("statement")) return "Credit";
-  if (d.includes("refund") || d.includes("return")) return "Refund";
-  return undefined;
-}

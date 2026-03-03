@@ -1,16 +1,10 @@
 import type { Page } from "playwright";
 import type { Transaction } from "../../types.js";
-import { normalizeDate } from "../utils.js";
+import { normalizeDate, parseBalance, MONTH_MAP } from "../utils.js";
 import { afterNavigation } from "../popup-guard.js";
 
 // Internal type without institution field (added by RobinhoodScraper.scrape)
 export type RobinhoodTransactionData = Omit<Transaction, "institution">;
-
-// Month abbreviation → number (for parsing "Feb 13" style dates)
-const MONTHS: Record<string, string> = {
-  Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06",
-  Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12",
-};
 
 /**
  * Parse a short date like "Feb 13" or "Feb 13, 2026" into YYYY-MM-DD.
@@ -21,14 +15,14 @@ function parseShortDate(dateStr: string): string {
   const fullMatch = dateStr.match(/(\w{3})\s+(\d{1,2}),?\s+(\d{4})/);
   if (fullMatch) {
     const [, mon, day, year] = fullMatch;
-    return `${year}-${MONTHS[mon] || "01"}-${day.padStart(2, "0")}`;
+    return `${year}-${MONTH_MAP[mon] || "01"}-${day.padStart(2, "0")}`;
   }
   // Try "Feb 13" format (no year)
   const shortMatch = dateStr.match(/(\w{3})\s+(\d{1,2})/);
   if (shortMatch) {
     const [, mon, day] = shortMatch;
     const year = new Date().getFullYear();
-    return `${year}-${MONTHS[mon] || "01"}-${day.padStart(2, "0")}`;
+    return `${year}-${MONTH_MAP[mon] || "01"}-${day.padStart(2, "0")}`;
   }
   return normalizeDate(dateStr);
 }
@@ -46,14 +40,6 @@ function classifyTransaction(description: string): string {
   if (d.includes("stock lending")) return "stock_lending";
   if (d.includes("interest")) return "interest";
   return "other";
-}
-
-/**
- * Parse a dollar amount string like "$X,XXX.XX" or "+$X,XXX.XX" or "-$XXX.XX"
- */
-function parseDollar(str: string): number {
-  const cleaned = str.replace(/[+$,]/g, "").replace(/\u2212/g, "-").trim();
-  return parseFloat(cleaned) || 0;
 }
 
 /**
@@ -122,7 +108,7 @@ export async function scrapeTransactions(
     const date = dateMatch ? parseShortDate(dateMatch[0]) : "";
     if (!date) continue;
 
-    const amount = parseDollar(amountText);
+    const amount = parseBalance(amountText);
     const category = classifyTransaction(description);
 
     // Determine if it's pending
